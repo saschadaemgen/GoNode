@@ -1,7 +1,7 @@
-# GoNode Tokenomics
+# GoNode Loyalty System
 
 **Document version:** Season 1 | April 2026
-**Component:** GoCoin (GC) - utility token for the GoNode network
+**Component:** GoCoin - closed-loop loyalty rewards system for the GoNode ecosystem
 **Copyright:** 2026 Sascha Daemgen, IT and More Systems, Recklinghausen
 **License:** AGPL-3.0
 
@@ -9,622 +9,627 @@
 
 ## Overview
 
-GoCoin (ticker: GC) is the native utility token of the GoNode decentralised infrastructure network. This document specifies the complete economic design: supply, distribution, emission schedule, burn mechanism, operator incentives, treasury management and governance.
+GoCoin is the loyalty and rewards unit of the GoNode ecosystem. It is **not a cryptocurrency**, not a utility token, not a security, and not electronic money. GoCoin is a **closed-loop loyalty system** - comparable in legal and operational structure to Payback points, Lufthansa Miles & More, Deutsche Bahn BahnBonus, Steam Wallet credits, or in-game currencies like Fortnite V-Bucks.
 
-GoCoin is deliberately designed as a utility token under MiCA Article 3(1)(9) ("other crypto-assets"), avoiding security, asset-referenced, and e-money token classifications. Users never touch GoCoin directly - they pay 5 EURC per month for GoNode Pro, and smart contracts handle the conversion and burn automatically. GoCoin is an incentive instrument for node operators, not a consumer-facing currency.
+The design principles are deliberately conservative:
 
-The tokenomic design is patterned after Helium's burn-and-mint equilibrium (proven at 2 million monthly active users post-2025 consolidation) and Storj's held-back payment model (proven at thousands of storage nodes). Every parameter has been calibrated against real operational data from comparable networks.
+- **No sale of GoCoin for money.** Not by the Foundation, not peer-to-peer, not for EUR, not for any other currency or crypto asset.
+- **No public trading markets.** No DEX liquidity, no CEX listings, no external exchanges.
+- **Coins stay in the ecosystem.** Redemption is only possible for goods and services within the SimpleGo ecosystem.
+- **Foundation is never counterparty.** Users earn from purchases or node operation, redeem within the ecosystem, or exchange with other users for ecosystem items. The Foundation only operates the marketplace infrastructure.
+- **Peer-to-peer barter, not trade.** Users can offer coins for other items/coins on an internal auction marketplace, but cannot sell them for money.
 
----
-
-## 1. Token specifications
-
-| Parameter | Value |
-|:----------|:------|
-| Token name | GoCoin |
-| Ticker | GC |
-| Standard | ERC-20 |
-| Deployment chain | Arbitrum One |
-| Decimals | 18 |
-| Maximum supply | 100,000,000 GC (fixed, non-mintable after initial deployment) |
-| Initial circulating supply (TGE) | 30,000,000 GC |
-| Node stake requirement | 10,000 GC per node |
-| Initial DEX price target | 0.10 EURC per GC |
-| Initial market cap target | 3,000,000 EURC (30M circulating × 0.10) |
-| Fully diluted valuation target | 10,000,000 EURC (100M × 0.10) |
-
-**Contract address:** To be published at TGE (Phase 3). Will be announced via:
-- GitHub release notes
-- Foundation website (simplego.dev)
-- Token registries (CoinGecko, CoinMarketCap, Arbiscan)
-- Verified on Arbiscan with Solidity source
+This design places GoCoin firmly within the established legal framework for loyalty programs in Germany and the EU, avoiding the regulatory complexity and legal risks of crypto tokens.
 
 ---
 
-## 2. Supply distribution
+## 1. What GoCoin is (and is not)
 
-Total supply of 100,000,000 GoCoin is distributed across five allocations:
+### 1.1 What GoCoin is
 
-| Allocation | Amount | % of Supply | Vesting |
-|:-----------|:-------|:-----------:|:--------|
-| Initial Circulating | 30,000,000 | 30% | Released at TGE (see section 2.1) |
-| Node Reward Pool | 40,000,000 | 40% | Emitted over 10 years per schedule in section 3 |
-| Foundation Treasury | 15,000,000 | 15% | 4-year linear vest, 1-year cliff |
-| Team and Advisors | 10,000,000 | 10% | 4-year linear vest, 1-year cliff |
-| Ecosystem Grants | 5,000,000 | 5% | Released by DAO vote as needed |
+GoCoin is a **digital loyalty point** issued by IT and More Systems GmbH to reward:
 
-### 2.1 Initial circulating breakdown (30M at TGE)
+- Users who purchase services (Pro subscriptions, hardware, premium features) in EUR
+- Node operators who contribute computing resources to the network
+- Community contributors who add value (moderated content, development, translations)
 
-| Purpose | Amount | Notes |
-|:--------|:-------|:------|
-| SimpleGo Community Airdrop | 10,000,000 | Early SimpleGo/GoBot/GoLab users. Migration incentive. |
-| DEX Initial Liquidity | 5,000,000 | Paired with 500,000 EURC in Uniswap V3 pool. Foundation treasury. |
-| Service Node Bonus Program | 5,000,000 | First 200 operators. 25,000 GC each, locked 1 year. |
-| Strategic Round (optional) | 5,000,000 | Private sale to strategic investors at 0.20 EURC. 2-year lock. |
-| Liquidity Mining Rewards | 3,000,000 | Uniswap LP incentives over 2 years. |
-| Grant Program / Bounties | 2,000,000 | Code audits, integrations, marketing campaigns. |
+GoCoin functions as:
 
-### 2.2 Foundation treasury vesting (15M)
+- **A reward currency** within the SimpleGo ecosystem
+- **A redemption instrument** for special editions, exclusive content, hardware, premium features
+- **A barter token** on the peer-to-peer marketplace for trading ecosystem items between users
+- **A recognition signal** for active community participants
 
-Foundation treasury follows a 4-year linear vest with 1-year cliff:
+### 1.2 What GoCoin is NOT
 
-| Month | Cumulative Vested | Available for Operations |
-|:------|:------------------|:-------------------------|
-| 0 (TGE) | 0 | 0 |
-| 12 (cliff) | 3,750,000 GC | 3,750,000 GC |
-| 24 | 7,500,000 GC | 3,750,000 GC new |
-| 36 | 11,250,000 GC | 3,750,000 GC new |
-| 48 | 15,000,000 GC | 3,750,000 GC new |
+GoCoin is explicitly **not**:
 
-After the cliff, ~312,500 GC per month vests. Used for Foundation operating expenses, grants to developers, bounties, and emergency reserves.
+| What it's NOT | Why this matters legally |
+|:--------------|:-------------------------|
+| A cryptocurrency | Avoids MiCA Title II whitepaper obligations |
+| A utility token | Avoids MiCA Art. 3(1)(9) classification |
+| Electronic money | Avoids E-Money Directive 2009/110/EC |
+| A payment instrument | Avoids PSD2 licensing requirements |
+| A security | Avoids MiFID II and Wertpapierhandelsgesetz |
+| An investment asset | Avoids KAGB and investment fund regulations |
+| A store of value | Avoids being classified as currency |
+| Redeemable in EUR | Cannot become E-Money under Art. 11 EMD |
+| Tradeable on exchanges | No CASP authorisation needed under MiCA Title V |
 
-### 2.3 Team and advisors vesting (10M)
+### 1.3 Legal classification
 
-Team allocations follow the same 4-year/1-year-cliff schedule as the Foundation. Individual allocations:
+GoCoin is designed to fall within the **limited network exception** under:
 
-| Role | Allocation | Notes |
-|:-----|:-----------|:------|
-| Founding team (Sascha + co-founders) | 6,000,000 GC | Vested per founder agreement |
-| Core engineering team (first 10 hires) | 2,500,000 GC | Individual vesting |
-| Strategic advisors | 1,000,000 GC | 2-year vest, no cliff |
-| Early contributors (pre-TGE) | 500,000 GC | Retroactive recognition, 2-year vest |
+- **Article 3(k) Payment Services Directive 2 (2015/2366)** - "limited network of service providers, or for a very limited range of goods and services"
+- **§ 2 Abs. 1 Nr. 10 Zahlungsdiensteaufsichtsgesetz (ZAG)** - German implementation of the limited network exemption
+- **Recital 14 E-Money Directive (2009/110/EC)** - exemption for closed-loop schemes
 
-### 2.4 Ecosystem grants (5M)
-
-Released incrementally by DAO vote (Foundation-controlled until Phase 4, then fully DAO). Allocation targets:
-
-| Category | Typical Grant | Examples |
-|:---------|:--------------|:---------|
-| Protocol integrations | 50,000 - 200,000 GC | Wallet integrations, exchange listings, SDK development |
-| Community tools | 10,000 - 50,000 GC | Block explorers, analytics dashboards, operator tools |
-| Security research | 50,000 - 500,000 GC | Formal verification, audit contributions, bug bounties |
-| Translations and documentation | 5,000 - 25,000 GC | Multilingual docs, video tutorials, educational content |
-| Third-party GoNode clients | 100,000 - 500,000 GC | Alternative client implementations (Rust, Python, Swift) |
+This is the same legal basis under which Payback, Miles & More, BahnBonus, Deutsche Telekom Magenta Moments, and similar German loyalty programs operate without needing e-money licenses or payment service authorisation.
 
 ---
 
-## 3. Emission schedule
+## 2. How GoCoin works
 
-The 40,000,000 GoCoin Node Reward Pool is emitted over 10 years following a modified Bitcoin-style halving curve. Emission decays as the network matures and burn increases.
+### 2.1 Earning GoCoin
 
-### 3.1 Annual emission curve
+Users and operators earn GoCoin through four distinct channels:
 
-| Period | Annual Rate | Annual Emission | Monthly Emission | Cumulative |
-|:-------|:------------|:----------------|:-----------------|:-----------|
-| Year 1 | 12.0% of pool | 4,800,000 GC | 400,000 GC | 4,800,000 |
-| Year 2 | 12.0% | 4,800,000 GC | 400,000 GC | 9,600,000 |
-| Year 3 | 10.0% | 4,000,000 GC | 333,333 GC | 13,600,000 |
-| Year 4 | 10.0% | 4,000,000 GC | 333,333 GC | 17,600,000 |
-| Year 5 | 8.0% | 3,200,000 GC | 266,666 GC | 20,800,000 |
-| Year 6 | 8.0% | 3,200,000 GC | 266,666 GC | 24,000,000 |
-| Year 7 | 6.0% | 2,400,000 GC | 200,000 GC | 26,400,000 |
-| Year 8 | 6.0% | 2,400,000 GC | 200,000 GC | 28,800,000 |
-| Year 9 | 4.0% | 1,600,000 GC | 133,333 GC | 30,400,000 |
-| Year 10 | 4.0% | 1,600,000 GC | 133,333 GC | 32,000,000 |
-| Year 11+ | Residual | ~1,000,000 GC/yr | ~83,333 GC | Reaches 40M over 18 more years |
+**Channel 1: Purchase rewards**
 
-Residual 8,000,000 GoCoin from year 11 onward serves as long-term operator rewards, supplemented by protocol fees (section 6).
+When users purchase services in EUR, they receive a proportional GoCoin bonus as a loyalty reward:
 
-### 3.2 Monthly reward distribution
+| Purchase | GoCoin reward (indicative) |
+|:---------|:---------------------------|
+| Pro subscription (5 EUR/month) | 5 GoCoin |
+| Pro annual (50 EUR/year) | 75 GoCoin (25% bonus for annual commitment) |
+| Hardware device (varies) | 10% of purchase value in GoCoin |
+| Premium plugin | 20% of purchase value in GoCoin |
+| Enterprise SLA | Custom rewards schedule per contract |
 
-Each month, the emission amount is distributed across all eligible service nodes proportional to their performance weight:
+The reward is a **standard loyalty bonus** similar to "for every 10 EUR spent, you earn 1 Payback point". The legal basis is a voluntary gift (Rabatt/Bonus) from the seller to the buyer, not a separate financial instrument.
 
-```
-node_reward = monthly_emission × (node_weight / total_network_weight)
+**Channel 2: Node operator rewards**
 
-where node_weight = uptime × correctness × diversity × tenure
-```
+Operators running GoNode infrastructure earn monthly GoCoin based on:
 
-**Weight components:**
+- Uptime percentage
+- Data volume served
+- Audit response correctness
+- Geographic/network diversity bonus
 
-| Component | Range | How computed |
-|:----------|:------|:-------------|
-| `uptime` | 0.0 - 1.0 | Fraction of epoch node was responsive |
-| `correctness` | 0.0 - 1.0 | Fraction of audit challenges answered correctly |
-| `diversity` | 0.8 - 1.5 | ASN and geographic diversity bonus (more diverse = higher) |
-| `tenure` | 1.0 - 1.3 | Bonus for long-term operation (reaches 1.3 at 24 months) |
+Operator rewards are treated as **service compensation** - payment for a service rendered (infrastructure provision). These rewards are taxable income for the operator under German tax law (see section 8).
 
-### 3.3 Expected operator earnings by year
+**Channel 3: Community contributions**
 
-Assumptions: target network of 500 nodes in year 1 growing to 2,000 nodes in year 5. Reward weight distribution: Gini coefficient of 0.3 (moderately unequal but not extreme).
+Community members earn GoCoin for verified valuable contributions:
 
-| Year | Total Emission | Network Nodes | Average Monthly Reward per Node | USD Value (at $0.10/GC) | USD Value (at $0.50/GC) |
-|:-----|:---------------|:-------------:|:-------------------------------:|:------------------------:|:------------------------:|
-| 1 | 4,800,000 GC | 500 | 800 GC | $80 | $400 |
-| 2 | 4,800,000 GC | 1,000 | 400 GC | $40 | $200 |
-| 3 | 4,000,000 GC | 1,500 | 222 GC | $22 | $111 |
-| 4 | 4,000,000 GC | 1,800 | 185 GC | $18.50 | $92.50 |
-| 5 | 3,200,000 GC | 2,000 | 133 GC | $13.30 | $66.50 |
+- Moderated high-quality content in GoLab
+- Bug reports that lead to accepted fixes
+- Translations of ecosystem documentation
+- Security research (per bug bounty program)
+- Third-party integrations published on our marketplace
 
-**Reading this table:** As the network grows and emission decays, nominal GC rewards per node decrease. However, burn pressure (section 4) means GC value tends to rise over the same period. Operators earn less nominal GC but each GC is worth more. Net USD value should remain stable or grow slightly.
+Community rewards are issued at the Foundation's discretion based on objective quality criteria.
 
----
+**Channel 4: Peer-to-peer marketplace**
 
-## 4. The burn-and-mint equilibrium
+Users can **acquire** GoCoin from other users by offering them ecosystem items, other GoCoin, or services within the ecosystem. This is explained in detail in section 3.
 
-The core economic design of GoCoin. User subscriptions create demand for GC through automatic buy-and-burn. Operator emissions create supply. The interaction determines long-term token value.
+### 2.2 Spending GoCoin
 
-### 4.1 How burn works
+GoCoin can only be redeemed for goods and services **within the SimpleGo ecosystem**:
 
-Every Pro subscription executes this sequence automatically in a single transaction:
+| Redemption option | Example |
+|:------------------|:--------|
+| Special edition firmware | Limited run of SimpleGo devices with exclusive features |
+| Premium profile features | Verified badge, custom themes, priority support |
+| Exclusive content access | Premium tutorials, early access to new features |
+| Hardware discounts | Partial payment for next GoKey or SimpleGo device |
+| Conference tickets | Entry to IT and More events, workshops |
+| Physical merchandise | T-shirts, stickers, limited print editions |
+| Priority features | Front-of-queue for new service activations |
 
-```
-Step 1: User pays 5 EURC to SubscriptionContract
-Step 2: SubscriptionContract sells 5 EURC on Uniswap for GC
-Step 3: SubscriptionContract burns 100% of received GC
-Step 4: SubscriptionContract activates Pro for 30 days
-```
+Redemption is at a **fixed EUR-equivalent rate** set by the Foundation. Example: 100 GoCoin = one special edition firmware unlock. Users always know exactly what their coins are worth in ecosystem goods.
 
-The amount of GC burned depends on the current GC/EURC price:
+**Important:** Users cannot redeem GoCoin for EUR or any other currency. The Foundation will never buy back GoCoin. This is essential for maintaining the legal classification as a loyalty program.
 
-| GC Price (EURC) | GC burned per subscription |
-|:----------------|:---------------------------|
-| 0.05 | 100 GC |
-| 0.10 | 50 GC |
-| 0.25 | 20 GC |
-| 0.50 | 10 GC |
-| 1.00 | 5 GC |
+### 2.3 The peer-to-peer marketplace
 
-**Key property:** EUR-denominated burn is constant (5 EURC per subscription), but GC-denominated burn is inversely proportional to price. When GC is cheap, more is burned. This creates a self-stabilising price floor.
+The marketplace allows users to trade GoCoin and ecosystem items between each other - but never for money.
 
-### 4.2 Burn sources beyond Pro subscriptions
+**What users can do:**
 
-Additional burn sources contribute to supply reduction:
+- Offer GoCoin in exchange for other users' ecosystem items
+- Auction rare special edition items with GoCoin as the bidding currency
+- Trade unlocked content access between users
+- Gift GoCoin to other users (no fee, just a simple transfer)
 
-| Source | Mechanism | Estimated Year 5 Burn |
-|:-------|:----------|:----------------------|
-| Pro subscriptions | 100% of EURC -> GC swap -> burn | 6,000,000 EURC/yr |
-| Enterprise SLA contracts | 30% of fiat revenue converted to GC and burned | 1,080,000 EURC/yr |
-| Slashing penalties | Slashed stake burned (not redistributed) | Variable, ~100,000 GC/yr |
-| Disqualified node held-back | 100% held-back burn on disqualification | Variable, ~50,000 GC/yr |
-| AI Service revenue | 20% of revenue converted to GC and burned | 240,000 EURC/yr |
+**What users cannot do:**
 
-### 4.3 Net supply dynamics by year
+- Sell GoCoin for EUR, USD, USDT, Bitcoin, or any other currency
+- List their coins on external exchanges (technically impossible: no public blockchain)
+- Cash out through the Foundation
+- Use GoCoin as payment for services outside the ecosystem
 
-Assumes network grows and token price appreciates per projections:
+**How the marketplace works:**
 
-| Year | Emission (GC) | Burn Value (EURC) | Burn at avg price | Net change (GC) | Circulating (end of year) |
-|:-----|:--------------|:------------------|:------------------|:----------------|:--------------------------|
-| Launch | - | - | - | - | 30,000,000 |
-| Year 1 | 4,800,000 | 30,000 | 300,000 GC @ 0.10 | +4,500,000 | 34,500,000 |
-| Year 2 | 4,800,000 | 210,000 | 1,400,000 GC @ 0.15 | +3,400,000 | 37,900,000 |
-| Year 3 | 4,000,000 | 720,000 | 3,600,000 GC @ 0.20 | +400,000 | 38,300,000 |
-| Year 4 | 4,000,000 | 2,400,000 | 8,000,000 GC @ 0.30 | -4,000,000 | 34,300,000 |
-| Year 5 | 3,200,000 | 6,000,000 | 12,000,000 GC @ 0.50 | -8,800,000 | 25,500,000 |
-| Year 7 | 2,400,000 | 15,000,000 | 20,000,000 GC @ 0.75 | -17,600,000 | Below 20M |
+Users browse listings, place bids, and complete barter trades. The Foundation operates the marketplace infrastructure (like eBay operates an auction platform) but does not act as buyer or seller. All trades are directly between users, with the marketplace as escrow and dispute resolution venue.
 
-**Key transition:** Around Year 3-4, burn begins to exceed emission. From Year 4 onwards, GoCoin is net deflationary, creating sustained price pressure upward.
+**Marketplace fee structure:**
 
-### 4.4 Comparison with other burn-and-mint networks
-
-| Network | Fee Denomination | Burn Mechanism | Year to Net Deflation |
-|:--------|:-----------------|:---------------|:----------------------|
-| Helium | USD (via Data Credits) | HNT -> Data Credits | Year 5 (achieved 2024) |
-| Ethereum (EIP-1559) | ETH (native) | Base fee burn | Year 1 (2021) |
-| BNB Chain | BNB (native) | Quarterly team burns | Ongoing |
-| **GoNode** | **EUR (via EURC)** | **EURC -> GC -> burn** | **Projected Year 4** |
-
-GoNode's design explicitly follows Helium's post-2025 model, which consolidated MOBILE and IOT back into HNT after the sub-token experiment failed.
+The Foundation charges a small fee (e.g., 2-5% of transaction value in GoCoin) on completed trades. This fee is burned (removed from circulation) to control supply inflation. The Foundation does not profit monetarily from trades - the fee is sink mechanism, not revenue.
 
 ---
 
-## 5. Operator economics
+## 3. Node operator economics
 
-### 5.1 Starting a node
+### 3.1 Holding period
 
-To operate a GoNode service node, an operator needs:
+Node operators face a **30-day holding period** on newly earned GoCoin before they can:
 
-| Requirement | Cost |
-|:------------|:-----|
-| 10,000 GC stake | ~$1,000 USD at launch price |
-| Hardware (adequate VPS or home server) | $20-50/month or $500 upfront |
-| Internet connection (100 Mbps symmetric) | $50-100/month |
-| Electricity | $5-15/month |
-| Monitoring and maintenance | ~1 hour/week |
+- List coins on the marketplace
+- Trade coins with other users
+- Transfer coins to others
 
-Total first-year cost (at minimum): approximately $1,500 USD.
+During the holding period, operators can:
 
-### 5.2 Held-back payment structure
+- Redeem their coins directly with the Foundation for ecosystem goods
+- Accumulate coins for long-term holding
+- Continue earning additional coins from ongoing operation
 
-Following Storj's proven model, new operators receive rewards on a graduated schedule:
+**Why a holding period:** Prevents operators from dumping fresh earnings onto the marketplace immediately, which would destabilise the internal coin/item price equilibrium. Similar mechanisms are used in Steam Marketplace (7-day lock on traded items) and are standard in loyalty programs.
 
-| Operator Age | % Paid Immediately | % Held Back | Rationale |
-|:-------------|:-------------------|:------------|:----------|
-| Months 1-3 | 50% | 50% | High abandonment risk in early period |
-| Months 4-6 | 75% | 25% | Medium risk, proven short-term commitment |
-| Months 7+ | 100% | 0% | Established operator |
-| Month 10+ | Held-back unlocked | - | Graceful exit bonus |
+### 3.2 Operator earnings projections
 
-**Held-back burn on disqualification:** If an operator is disqualified for misbehaviour before month 10, 100% of their held-back amount is burned. This creates strong economic disincentive to cut corners.
+At network maturity (Year 3-5), typical monthly earnings for a standard operator:
 
-### 5.3 Breakeven analysis
+| Network size | Monthly emission | Operators | Average earnings |
+|:-------------|:----------------|:----------|:-----------------|
+| Year 1 | 40,000 GoCoin | 100 | 400 GoCoin/node |
+| Year 2 | 60,000 GoCoin | 300 | 200 GoCoin/node |
+| Year 3 | 80,000 GoCoin | 600 | 133 GoCoin/node |
+| Year 4 | 100,000 GoCoin | 1,000 | 100 GoCoin/node |
+| Year 5 | 120,000 GoCoin | 1,500 | 80 GoCoin/node |
 
-For a typical home operator with moderate hardware:
+**Important:** Because GoCoin has no monetary market value, these numbers are in ecosystem-utility terms, not currency. 100 GoCoin means "credit for 100 EUR worth of ecosystem redemption value" - not "100 EUR that can be withdrawn".
 
-```
-Assumptions:
-- Operator ran continuously for 12 months
-- Network size: 1,000 active nodes
-- Monthly emission: 400,000 GC
-- Operator weight: average (1.0)
-- No slashing
+### 3.3 No DEX pool, no initial liquidity required
 
-Year 1 earnings:
-- Monthly emission share: 400 GC
-- Actual payout months 1-3: 200 GC/mo = 600 GC paid, 600 GC held
-- Actual payout months 4-6: 300 GC/mo = 900 GC paid, 300 GC held
-- Actual payout months 7-12: 400 GC/mo = 2,400 GC paid
-- Year 1 paid: 3,900 GC
-- Year 1 held: 900 GC (unlocks month 10+)
-- Year 1 total accrued: 4,800 GC
+Because GoCoin is not tradeable for money, **no liquidity pool is needed**. This eliminates:
 
-Year 1 revenue at $0.10/GC: $480
-Year 1 revenue at $0.25/GC: $1,200
-Year 1 revenue at $0.50/GC: $2,400
+- 500,000 EUR Foundation liquidity requirement (from the old model)
+- Market maker engagement costs
+- CEX listing fees (10,000 - 30,000 EUR per listing)
+- Uniswap V3 setup and management
+- Smart contract deployment on Arbitrum for token economics
+- Ongoing gas cost obligations
 
-Year 1 costs: $1,500 (hardware + bandwidth + electricity)
-
-Breakeven at $0.10/GC: Year 2+ (continuing operation reaches profitability)
-Breakeven at $0.25/GC: mid-Year 1
-Breakeven at $0.50/GC: month 4
-```
-
-**Profit amplification from burn:** As the network matures (Year 3+), increasing burn reduces circulating supply. Operator GC holdings appreciate. An operator running from Year 1 to Year 5 could see their held-back GC from Year 1 worth 5-10x by Year 5 if burn-deflation occurs as modeled.
-
-### 5.4 Slashing consequences
-
-| Offense | Stake slash | Held-back action | Result |
-|:--------|:------------|:-----------------|:-------|
-| Equivocation / double-signing | 5% (500 GC) | 100% burned | Immediate deregistration + reapply |
-| Serving corrupted data | 5% (500 GC) | 100% burned | Immediate deregistration + reapply |
-| Censorship | 10% (1,000 GC) | 100% burned | Deregistered for 90 days |
-| Malicious audit | 20% (2,000 GC) | 100% burned | Permanent ban from network |
-| Downtime > 24h | 0% | Kept | Deregistered from active set, can rejoin |
-
-### 5.5 Exit mechanics
-
-Operators can exit at any time, with these timelines:
-
-```
-Graceful exit:
-  Day 0: Call requestExit() on staking contract
-  Days 0-2: Node transfers stored data to replacement nodes
-  Day 2: Stake and held-back unlockable
-  Day 2+: Call withdrawStake() to retrieve GC
-
-Forced exit (slashing):
-  Day 0: Slashing evidence submitted and confirmed
-  Day 0: Slash amount burned, node deregistered
-  Day 0: Held-back amount burned
-  Day 0: Remaining stake unlockable after 48h cooldown
-
-Abandonment (node goes offline without exiting):
-  After 7 days offline: node considered abandoned
-  Held-back amount kept locked for 9 months
-  Stake remains locked until operator returns
-  Operator can rejoin by coming back online within 90 days
-  After 90 days offline: operator must re-register
-```
+This saves the Foundation approximately **600,000 - 800,000 EUR in setup costs** compared to the original crypto token design.
 
 ---
 
-## 6. Protocol fees (future)
+## 4. Supply management
 
-From Year 3 onward, the protocol can charge optional fees for advanced features. All fee revenue follows the burn-and-mint pattern.
+### 4.1 Total issuance cap
 
-### 6.1 Planned fee types
+The Foundation commits to a **soft cap of 100,000,000 GoCoin** total issuance. Unlike a crypto token, this cap is not cryptographically enforced - it is a **policy commitment** in the Terms of Service. The Foundation cannot technically exceed the cap, because the database (or private chain) enforces it at the application level.
 
-| Fee | Charged on | Rate | Purpose |
-|:----|:-----------|:-----|:--------|
-| Priority routing | Per-message for Pro+ users | 0.001 EURC | Guaranteed delivery speed |
-| Archive storage | Per-GB-month for Pro+ files older than 30 days | 0.02 EURC | Long-term file retention |
-| Dedicated swarm | Monthly fee for enterprise | 500 EURC | Private swarm for one customer |
-| Verified operator | One-time KYC badge | 50 EURC | Operator identity attestation (optional) |
-| Cross-chain bridge | Transaction fee for bridging GC | 0.5% | Access to other L2s |
+**Why a cap:** Prevents unlimited inflation that would devalue existing holdings. Users know that their coins represent a meaningful fraction of the total supply. This transparency is important for user trust in the loyalty program.
 
-All fees contribute to the burn, creating deflationary pressure independent of Pro subscription volume.
+### 4.2 Issuance schedule
 
-### 6.2 Fee governance
+GoCoin issuance follows a controlled schedule:
 
-Fees are set by DAO vote (post-Phase 4) or Foundation multisig (Phase 0-3). Changes require:
+| Category | Allocation | Release schedule |
+|:---------|:-----------|:-----------------|
+| Purchase rewards | 40,000,000 | Earned by users over 10+ years |
+| Node operator rewards | 40,000,000 | Emitted monthly over 10+ years (decaying) |
+| Community contributions | 10,000,000 | Discretionary Foundation issuance |
+| Foundation reserve | 10,000,000 | Held for future initiatives (never sold) |
 
-- 7-day deliberation period
-- Quorum of 10% of circulating GC
-- 2/3 majority approval
-- 30-day implementation delay
+The 40M operator reward pool emits on a decaying curve similar to Bitcoin halving - more in early years when fewer operators exist, less as the network matures.
 
----
+### 4.3 Burn mechanisms
 
-## 7. Token Generation Event (TGE)
+GoCoin is removed from circulation through multiple channels:
 
-### 7.1 Pre-TGE milestones
+- **Redemption burn:** When users redeem coins for special editions, those coins are burned (removed from circulation)
+- **Marketplace fee burn:** The 2-5% marketplace fee is burned on every trade
+- **Inactive account reclamation:** After 5 years of inactivity, accounts may be archived with coins returned to the Foundation reserve
+- **Discretionary burns:** The Foundation may burn coins from its reserve to control supply inflation
 
-Before TGE, these must be complete:
+### 4.4 Transparency commitments
 
-- MiCA whitepaper filed with BaFin (20+ business days before)
-- Smart contracts audited by at least 2 reputable firms
-- Initial DEX liquidity secured (500,000 EURC)
-- Bootstrap nodes operational and stable for 30+ days
-- Testnet with 50+ operators and 1,000+ active users
-- Community airdrop snapshot taken
-- Service Node Bonus Program participants identified
+The Foundation publishes monthly:
 
-### 7.2 TGE sequence
+- Total GoCoin in circulation
+- Coins issued in the past month (by category)
+- Coins burned in the past month (by mechanism)
+- Active account count
+- Marketplace transaction volume
 
-**Day -14: Whitepaper publication**
-- MiCA whitepaper published on simplego.dev
-- Community review period begins
-- Media announcements
-
-**Day -7: Token contract deployment**
-- GoCoin ERC-20 deployed to Arbitrum
-- Verified on Arbiscan
-- CoinGecko / CoinMarketCap pre-listings submitted
-
-**Day 0: TGE execution**
-- 30M GC distributed per allocation table
-- Uniswap V3 liquidity pool created (5M GC + 500k EURC)
-- Initial price: 0.10 EURC per GC
-- Trading begins
-
-**Day 1: Community airdrop**
-- 10M GC airdropped to eligible SimpleGo community members
-- Claim period opens (90 days)
-
-**Day 1-7: Service Node Bonus Program**
-- First 200 operators stake 10k GC each (from their bonus allocation)
-- Nodes begin registering and joining swarms
-- Network transitions from bootstrap nodes to community-operated
-
-**Day 7+: Full mainnet**
-- Pro subscriptions go live in EURC
-- Burn mechanism activated
-- Reward distribution begins (first payout 30 days after TGE)
-
-### 7.3 Migration from testnet
-
-Testnet participants (Phase 2) who earned incentive points receive GC proportionally at TGE:
-
-```
-Incentive points distribution:
-  Total pool: 3,000,000 GC (from grants allocation)
-  Conversion: 1 testnet point = 0.5 GC (approximately)
-  Lockup: 6-month linear vest starting at TGE
-
-Top 200 testnet operators:
-  Priority access to Service Node Bonus Program
-  Pre-registered swarm memberships
-  Migration support from Foundation
-```
+This transparency is equivalent to what Payback and similar loyalty programs publish in their annual reports. It provides accountability without requiring a public blockchain.
 
 ---
 
-## 8. Liquidity strategy
+## 5. Technology choice
 
-### 8.1 DEX liquidity (primary)
+### 5.1 Database vs. permissioned blockchain
 
-Initial liquidity on Arbitrum DEXes:
+Two technology options are viable for the GoCoin ledger. Both are under evaluation, with the final choice to be made in Phase 1:
 
-| DEX | Pair | Initial Liquidity | Fee Tier |
-|:----|:-----|:------------------|:---------|
-| Uniswap V3 (primary) | GC/EURC | 5,000,000 GC + 500,000 EURC | 0.3% |
-| Uniswap V3 | GC/ETH | 500,000 GC + equivalent ETH | 0.3% |
-| Camelot | GC/EURC | 500,000 GC + 50,000 EURC | 0.3% |
+**Option A: Internal database (PostgreSQL or similar)**
 
-Liquidity Mining Rewards (3M GC from initial circulating) distributed to LP providers over 24 months to maintain depth.
+- **Approach:** Standard ACID-compliant relational database maintained by the Foundation
+- **Used by:** Payback, Miles & More, Steam Wallet, PSN, most major loyalty programs
+- **Advantages:**
+  - Simple to implement and operate
+  - Very high performance (millions of transactions per second possible)
+  - Lower operational cost
+  - Standard enterprise software practices
+  - No blockchain-related regulatory questions
+- **Disadvantages:**
+  - Users must trust Foundation's bookkeeping
+  - No independent verification of balances
+  - Single point of technical failure (mitigated by backup and replication)
 
-### 8.2 Market maker engagement
+**Option B: Permissioned blockchain (Hyperledger Fabric or similar)**
 
-Foundation will engage a professional market maker from Day 30 post-TGE:
+- **Approach:** Distributed ledger with pre-approved validator nodes
+- **Used by:** IBM Food Trust, some banking consortia, supply chain systems
+- **Advantages:**
+  - Transparent ledger that multiple parties can independently verify
+  - Tamper-evident transaction history
+  - Decentralises trust from the Foundation to a validator consortium
+  - Aligns philosophically with the decentralisation theme of GoNode
+- **Disadvantages:**
+  - Higher operational complexity and cost
+  - Slower transaction throughput (though still adequate for loyalty program needs)
+  - Requires governance decisions about who runs validator nodes
+  - Adds regulatory considerations (though permissioned chains are generally treated as databases for regulatory purposes)
 
-Candidates: Wintermute, Keyrock, GSR (all have worked with Session, Filecoin, and similar networks).
+### 5.2 Recommendation
 
-Terms:
-- Token loan structure (no direct treasury payment)
-- 6-month initial contract, renewable
-- Performance-based (spread maintenance, depth targets)
-- Inventory returned at contract end
+**Phase 1 (initial implementation):** Start with internal PostgreSQL database. This is the fastest path to a working system and what 99% of loyalty programs use successfully.
 
-### 8.3 CEX listings
+**Phase 3+ (if community demand):** Consider migrating to or supplementing with a permissioned blockchain for transparency. This is a future architectural decision, not a launch requirement.
 
-**Phase 1 (Month 1-3 post-TGE):** Small-tier CEX listings
+The specific technology does not change the legal classification. Whether the ledger lives in PostgreSQL or Hyperledger, GoCoin remains a loyalty point under PSD2 Art. 3(k) and ZAG § 2.
 
-| Exchange | Listing Cost (approx) | Target |
-|:---------|:---------------------|:-------|
-| MEXC | $25,000 | Week 2 post-TGE |
-| Gate.io | $30,000 | Week 4 post-TGE |
-| BitMart | $15,000 | Week 6 post-TGE |
-| LBank | $10,000 | Month 2 post-TGE |
+### 5.3 Integration with GoNode infrastructure
 
-**Phase 2 (Month 3-12 post-TGE):** Mid-tier CEX listings
+Regardless of the ledger technology, GoCoin operations integrate with the GoNode ecosystem through:
 
-| Exchange | Requirements | Target |
-|:---------|:-------------|:-------|
-| KuCoin | Volume, community, tech review | Month 3 |
-| Bitget | Volume, partnerships | Month 4 |
-| HTX (Huobi) | Compliance review | Month 6 |
-| Kraken | Full due diligence | Month 9 |
-
-**Phase 3 (Year 2+):** Major exchange listings
-
-| Exchange | Typical Requirements |
-|:---------|:---------------------|
-| Coinbase | 100k+ users, regulatory clarity, token age |
-| Binance | High volume, geographic diversity, security audits |
-| Bybit | Regional presence, BD relationship |
-
----
-
-## 9. Governance
-
-### 9.1 Three-phase governance transition
-
-**Phase A: Foundation Control (Year 0-2)**
-
-Foundation multisig (3-of-5) controls all protocol parameters:
-- Emission schedule adjustments
-- Fee rates
-- Slashing parameters
-- Grant recipients
-- Upgrade deployments
-
-All decisions published with 7-day deliberation before execution. Community can submit proposals for Foundation review.
-
-**Phase B: Hybrid Governance (Year 2-4)**
-
-DAO voting introduced for non-security parameters:
-- Fee adjustments
-- Grant recipients
-- Emission schedule within defined bounds
-- Non-critical parameter tuning
-
-Foundation retains veto power on:
-- Security issues
-- Cryptographic changes
-- Smart contract upgrades
-
-Voting power: 1 GC staked in governance contract = 1 vote.
-
-**Phase C: Full DAO (Year 4+)**
-
-Foundation admin keys burned. All parameters controlled by DAO vote:
-- Token upgrades (if any, requires 75% supermajority)
-- Parameter changes (66% majority)
-- Grant releases (50% majority)
-
-Foundation continues operations (hiring developers, marketing, enterprise sales) but has no special protocol privileges.
-
-### 9.2 Voting mechanics
-
-| Parameter | Required Quorum | Required Majority | Deliberation Period |
-|:----------|:----------------|:------------------|:--------------------|
-| Protocol upgrade (contract replacement) | 20% of circulating | 75% yes | 30 days |
-| Critical parameter (slashing, emission) | 15% of circulating | 66% yes | 14 days |
-| Normal parameter (fees, rewards) | 10% of circulating | 50%+1 yes | 7 days |
-| Grant allocation (<100k GC) | 5% of circulating | 50%+1 yes | 3 days |
-
-### 9.3 Token voting vs operator voting
-
-To prevent whale dominance, certain votes are weighted by operator status:
-
-| Vote Type | Weighting |
-|:----------|:----------|
-| Protocol upgrades | 1 GC staked = 1 vote |
-| Slashing parameters | 1 operator = 1 vote (regardless of stake) |
-| Grant allocations | 50% GC-weighted, 50% operator-weighted |
-| Fee changes | 1 GC staked = 1 vote |
+- **Authentication:** GoUNITY certificates identify users
+- **Authorisation:** Smart permissions define who can earn, spend, transfer
+- **Transport:** SMP protocol carries coin transactions (encrypted)
+- **Hardware binding:** Optional GoKey device provides hardware-anchored identity for higher-value operations
 
 ---
 
-## 10. Regulatory positioning
+## 6. User experience
 
-### 10.1 MiCA classification
+### 6.1 What users see
 
-GoCoin is a utility token under MiCA Article 3(1)(9) ("other crypto-assets"). Key evidence:
+For end users, GoCoin is as simple as Payback points. Their experience:
 
-| Criterion | GoCoin Position |
-|:----------|:---------------|
-| Pegged to fiat? | No |
-| Pegged to basket? | No |
-| Promise of redemption? | No |
-| Profit-sharing with holders? | No |
-| Voting rights with financial value? | No (voting is limited to protocol params) |
-| Main purpose | Access to network services (operation, governance) |
+- Buy a Pro subscription for 5 EUR → automatically earn 5 GoCoin
+- Open profile → see GoCoin balance and earning history
+- Browse marketplace → see what special items can be redeemed or traded for
+- Redeem coins → click "redeem", select item, receive it
+- Trade with other users → post offer, accept bids, complete trades
 
-This places GoCoin in the same category as Filecoin's FIL, Session's SESH, Arweave's AR, and Helium's HNT - all classified as utility tokens in various jurisdictions.
+No wallets required. No private keys. No seed phrases. No gas fees. No confusion about what the coins are "worth" in money terms.
 
-### 10.2 MiCA Title II whitepaper
+### 6.2 What operators see
 
-Before any public offer, Foundation files a Title II whitepaper with BaFin:
+Operators have a similar experience with additional features:
 
-| Section | Content |
-|:--------|:--------|
-| Part A | Issuer information (Swiss Stiftung details) |
-| Part B | Project information (GoNode description) |
-| Part C | Rights and obligations (token functions) |
-| Part D | Technology (smart contracts, consensus) |
-| Part E | Risks (market, technical, regulatory) |
-| Part F | Token offer details (distribution, timing) |
-| Part G | Sustainability (energy, governance) |
+- Earnings dashboard showing monthly GoCoin accrual
+- Performance metrics (uptime, audit response, diversity bonus)
+- Holding period countdown for marketplace access
+- Direct redemption to Foundation for ecosystem goods
+- Historical earnings statements for tax purposes
 
-Filing deadline: 20 business days before public offer. BaFin does not approve but can require amendments.
+### 6.3 Terms of Service commitments
 
-### 10.3 Exemptions
+The Foundation's Terms of Service commit to:
 
-MiCA Article 4(2) provides exemptions useful for phased launch:
+- **No unilateral devaluation:** Redemption ratios cannot be worsened without 6 months notice
+- **No arbitrary cancellation:** Accounts cannot be closed without cause, giving users time to redeem
+- **Reasonable expiry policy:** Coins do not expire except after 5+ years of account inactivity
+- **Transparent reporting:** Monthly supply and transaction reports
+- **Dispute resolution:** Clear procedure for marketplace disputes
 
-| Exemption | Limit | GoNode Use |
-|:----------|:------|:-----------|
-| Small offer (< 150 persons/MS) | Per member state | Phase 1 testnet, Service Node Bonus Program |
-| Small offer (< 1M EUR / 12 months) | Aggregate | Phase 2 pre-TGE private round |
-| Qualified investors only | Professional investors | Strategic round if needed |
-| Fully decentralised | Art. 2(3) | Target state post-Phase 4 |
+These commitments align with German consumer protection law and EU Consumer Rights Directive requirements.
 
 ---
 
-## 11. Risk factors
+## 7. Legal framework
 
-### 11.1 Token-specific risks
+### 7.1 Limited network exemption
 
-| Risk | Severity | Mitigation |
-|:-----|:---------|:-----------|
-| Token price falls below breakeven for operators | Medium | Multiple revenue streams ensure network continues; held-back structure protects long-term operators |
-| Insufficient burn volume to offset emission | Medium | Conservative burn projections; enterprise SLAs provide additional burn source; emission decays over time |
-| Uniswap pool manipulation affects burn efficiency | Low | Multi-pool routing, MEV protection via private mempool, large pool depth reduces impact |
-| Regulatory reclassification as security | Low | Design explicitly avoids Howey factors; utility token classification strong |
-| Operator concentration (Sybil attack via stake) | Low | Geographic weighting, VRF randomness, economic cost of 33% attack |
+GoCoin qualifies for the limited network exemption because:
 
-### 11.2 Competitive risks
+- It is issued by a single entity (IT and More Systems GmbH)
+- It can only be redeemed within the SimpleGo ecosystem
+- It is not generally accepted for payment outside the ecosystem
+- The Foundation does not purchase coins back for money
+- No external market is permitted or facilitated
 
-| Risk | Severity | Mitigation |
-|:-----|:---------|:-----------|
-| Session relaunches under new management | Low | Session code is AGPL; community migration likely toward better-funded successor |
-| XMTP wins enterprise privacy messaging | Medium | Different market focus (GoNode: hardware identity + SimpleX, XMTP: Ethereum-native) |
-| Centralized competitor (Threema, Signal) acquires market | Medium | Target segments (government, privacy enthusiasts) value decentralisation |
-| New L1/L2 launches with better decentralised messaging | Low | Protocol-level switching cost high; Arbitrum deployment is flexible |
+This places GoCoin alongside:
 
-### 11.3 Operational risks
+- Payback Punkte (since 2000, never regulated as e-money)
+- Lufthansa Miles (since 1993, standard airline loyalty)
+- Amazon Coins (digital credit for Kindle/Appstore purchases)
+- Steam Wallet (gaming platform closed economy)
+- BahnBonus (Deutsche Bahn loyalty since 2000)
 
-| Risk | Severity | Mitigation |
-|:-----|:---------|:-----------|
-| Smart contract exploit | High severity, low probability | Multiple audits, bug bounty, timelock, multisig emergency pause |
-| Foundation key compromise | High severity, low probability | Multisig governance, hardware security modules, key burn at Phase 4 |
-| Key team departure | Medium severity, medium probability | 4-year vesting, team documentation, multiple-contributor model |
-| Legal action against Foundation | Medium severity, low probability | Swiss jurisdiction, clear utility token design, no custody |
+None of these require e-money licenses or payment service authorisation.
+
+### 7.2 MiCA does not apply
+
+MiCA Regulation (EU 2023/1114) applies to "crypto-assets", defined in Art. 3(1)(5) as digital representations of value that can be transferred and stored electronically using distributed ledger technology.
+
+GoCoin:
+
+- Is not a crypto-asset under MiCA - it's a closed-loop loyalty point
+- Is not traded on public markets (MiCA Title III/IV do not apply)
+- Is not offered to the public as an investment (MiCA Title II does not apply)
+- Does not involve Crypto-Asset Service Providers (MiCA Title V does not apply)
+
+Even if GoCoin were hypothetically classified as a crypto-asset, it would fall under the **Art. 2 exclusions** for limited-network instruments, similar to PSD2 Art. 3(k).
+
+### 7.3 DSA obligations (marketplace)
+
+The Digital Services Act (EU 2022/2065) applies to the peer-to-peer marketplace:
+
+- **Art. 16 (notice-and-action):** The Foundation implements a reporting mechanism for illegal content/offers
+- **Art. 14 (terms and conditions):** Clear marketplace rules, easily accessible
+- **Art. 30 (traceability of traders):** Not applicable if all users are consumers; if commercial users participate, traceability requirements apply
+- **Art. 32 (specific obligations for online marketplaces):** Design choices for safe and transparent marketplace
+
+The marketplace is **not a VLOP** (Very Large Online Platform - 45M+ EU users threshold), so VLOP-specific obligations do not apply.
+
+### 7.4 GDPR compliance
+
+Standard GDPR compliance applies:
+
+- User accounts and transaction history are personal data
+- Legal basis for processing: contract performance (Art. 6(1)(b))
+- Data minimisation: only necessary data collected
+- Right to access, rectification, erasure respected
+- Data retention policies published
+- DPO designation per Art. 37 if applicable
+
+The decision between internal database vs. permissioned blockchain affects GDPR implementation:
+
+- **Database:** Simple GDPR compliance - data can be deleted on request per Art. 17
+- **Permissioned blockchain:** More complex - EDPB Guidelines 02/2025 address blockchain immutability, generally requires pseudonymisation and justified retention
+
+This is another reason to start with the database option.
 
 ---
 
-## 12. Related components
+## 8. Taxation
 
-| Component | Role | Documentation |
-|:----------|:-----|:-------------|
-| [GoNode Architecture](ARCHITECTURE_AND_SECURITY.md) | Technical architecture using GoCoin | This repo |
-| [GoNode Business Model](BUSINESS_MODEL.md) | Revenue streams supporting burn mechanism | This repo |
-| [GoNode Legal Compliance](LEGAL_COMPLIANCE.md) | MiCA and regulatory analysis | This repo |
-| [GoNode Smart Contracts](SMART_CONTRACTS.md) | Solidity implementation details | This repo |
-| [SimpleGo ecosystem](https://github.com/saschadaemgen/SimpleGo) | Products using GoNode infrastructure | SimpleGo repo |
+### 8.1 Tax treatment for node operators
+
+Node operator GoCoin rewards are taxable income. The specific classification depends on the operator's circumstances:
+
+**Gewerbliche Tätigkeit (commercial activity):** If operating nodes as a business, income falls under § 15 EStG. Requires Gewerbeanmeldung, subject to Gewerbesteuer above thresholds.
+
+**Sonstige Einkünfte (other income):** For small-scale operators, rewards may fall under § 22 Nr. 3 EStG, with a Freibetrag of 256 EUR/year.
+
+**Valuation:** Rewards are valued at their fair market value at the time of receipt - the "redemption value" of GoCoin at that moment (e.g., if 100 GoCoin redeems for 100 EUR of ecosystem goods, each GoCoin is valued at 1 EUR for tax purposes).
+
+The Foundation provides operators with annual earnings statements for tax reporting.
+
+### 8.2 Tax treatment for users earning purchase bonuses
+
+Purchase reward GoCoin is treated like any other loyalty bonus:
+
+- **Typically tax-free** as a Rabatt (rebate) reducing the effective purchase price
+- Similar treatment to Payback points, airline miles, cashback programs
+- BMF-Schreiben on loyalty programs (2015/12/10) provides guidance
+- No taxable event at redemption if redeemed for services from the issuer
+
+### 8.3 Tax treatment for marketplace trades
+
+When users trade GoCoin and ecosystem items between each other:
+
+- **Private sales exception (§ 23 EStG):** Gains may be tax-free if held more than 1 year and under 600 EUR/year threshold
+- **Sonstige Leistungen (§ 22 Nr. 3 EStG):** Commercial trading may be subject to income tax
+- **DAC7 reporting:** Platform operators must report user transactions above thresholds (1000 EUR or 30 transactions per year)
+
+The Foundation implements DAC7-compliant reporting to tax authorities as required.
+
+### 8.4 VAT treatment
+
+- **Purchase rewards:** Not a separate VAT event - the reward is included in the original purchase
+- **Redemption:** VAT applies when goods/services are delivered in exchange for coins
+- **Marketplace trades:** Typically outside VAT scope for private users; commercial users may trigger VAT
+- **Foundation marketplace fees:** VAT applies to Foundation's fee income if above small-business threshold
 
 ---
 
-*GoNode Tokenomics v1 - April 2026*
+## 9. Comparison: old crypto token model vs. new loyalty model
+
+| Dimension | Old (crypto token) | New (loyalty system) |
+|:----------|:-------------------|:---------------------|
+| Legal classification | MiCA Art. 3(1)(9) utility token | PSD2 Art. 3(k) / ZAG § 2 limited network exemption |
+| Monetary value | Tradeable, market-priced | Fixed redemption value, not tradeable for money |
+| User complexity | Wallet, seed phrase, gas fees | Standard account, like Payback |
+| Foundation setup cost | ~600,000 EUR (liquidity, listings, audits) | ~50,000 EUR (database + marketplace) |
+| Legal risk | High (Tornado Cash precedent, MiCA compliance) | Low (established loyalty framework) |
+| CEX/DEX listings | Required for liquidity | Not needed |
+| BaFin whitepaper | Required before public offer | Not required |
+| CASP authorisation | Risk of triggering | Not applicable |
+| Price volatility | High (user funds at risk) | None (fixed ecosystem value) |
+| Technology | Arbitrum smart contracts + DEX | Database or permissioned chain |
+| Scale | Limited by Arbitrum TPS | Millions of TPS possible |
+| Target market | Crypto-native users | All users (mainstream accessible) |
+| Regulatory burden | MiCA + KWG + GwG + potentially CASP | DSA + GDPR + standard loyalty regs |
+| Tax complexity (users) | High (every trade is taxable) | Low (loyalty bonuses typically tax-free) |
+| Compliance cost ongoing | ~200,000 EUR/year | ~30,000 EUR/year |
+
+---
+
+## 10. Roadmap alignment
+
+The new loyalty model aligns with a revised ecosystem roadmap:
+
+**Phase 0 (Months 0-3): Foundation and concept**
+
+- Foundation setup (Switzerland or Germany)
+- Grant applications (same pipeline as before)
+- Legal opinion confirming limited network exemption classification
+- Terms of Service drafting
+
+**Phase 1 (Months 3-9): First implementation**
+
+- Internal database deployment
+- User earnings infrastructure (purchase -> coin issuance)
+- Redemption catalog (initial special editions)
+- Foundation reserve allocation
+
+**Phase 2 (Months 9-15): Node operator rewards**
+
+- Node operator earnings go live
+- Holding period mechanics
+- Monthly emission schedule
+- Operator dashboard
+
+**Phase 3 (Months 15-21): Marketplace launch**
+
+- Peer-to-peer marketplace beta
+- Auction and barter mechanics
+- Dispute resolution framework
+- DSA compliance implementation
+
+**Phase 4 (Months 21-30): Scale and optimisation**
+
+- Permissioned blockchain evaluation (if demand warrants)
+- Expanded redemption options
+- Integration with GoShop, GoTube, GoBook as they launch
+- International expansion (within EU)
+
+---
+
+## 11. Risks and mitigations
+
+### 11.1 Classification risk
+
+**Risk:** BaFin or another regulator reclassifies GoCoin as e-money or crypto-asset.
+
+**Mitigation:**
+- Legal opinion before launch confirming limited network exemption
+- Conservative design staying within established precedent (Payback, Miles)
+- No redemption in money
+- No public markets
+- Transparent documentation
+
+### 11.2 Marketplace abuse risk
+
+**Risk:** Users use the marketplace for money laundering or to circumvent loyalty program status.
+
+**Mitigation:**
+- AML monitoring for suspicious patterns
+- Volume thresholds triggering review
+- DAC7 compliance for commercial users
+- No cash-out mechanism
+- Audit trail in database/chain
+
+### 11.3 User trust risk
+
+**Risk:** Users worry about Foundation manipulating the ledger.
+
+**Mitigation:**
+- Monthly transparency reports
+- External audit of supply and burns
+- Option to migrate to permissioned blockchain later
+- Strong Terms of Service commitments
+- Legal liability for misconduct
+
+### 11.4 Operator churn risk
+
+**Risk:** Operators find the rewards insufficient and leave.
+
+**Mitigation:**
+- Sufficient reward pool (40M coins over 10+ years)
+- Holding period prevents immediate dumping
+- Real ecosystem utility for earned coins
+- Hardware binding (GoKey) creates switching costs
+
+---
+
+## 12. Comparison to real-world precedents
+
+### 12.1 Payback (Germany, since 2000)
+
+- 30+ million users in Germany
+- Legal basis: limited network exemption
+- Points earned through purchases, redeemable for goods/donations/transfers to partners
+- No e-money license
+- Annual revenue: ~500M EUR
+
+GoCoin follows the same legal structure but adds a peer-to-peer marketplace (which Payback does not have).
+
+### 12.2 Lufthansa Miles & More (since 1993)
+
+- 36+ million members worldwide
+- Miles earned through flights and partner purchases
+- Redeemable for flights, upgrades, goods
+- Peer-to-peer: Family Sharing allows limited transfers between members
+- No e-money regulation
+
+GoCoin follows similar structure with broader peer-to-peer capabilities.
+
+### 12.3 Steam Marketplace (Valve)
+
+- 130+ million active users globally
+- Digital items earned through gameplay or purchased
+- Marketplace allows peer-to-peer trading with Steam Wallet (not for cash)
+- 7-day holding period on traded items (like our operator holding period)
+- Marketplace fee ~15% (we charge 2-5%)
+
+GoCoin marketplace structure closely mirrors Steam's approach.
+
+### 12.4 Fortnite V-Bucks (Epic Games)
+
+- 400+ million player accounts
+- V-Bucks purchased with money, redeemed in-game
+- No peer-to-peer marketplace
+- Recent FTC settlement (USA) established some consumer protection requirements
+
+GoCoin learns from V-Bucks in terms of clear redemption and transparent pricing.
+
+### 12.5 EVE Online ISK/PLEX
+
+- 300,000+ active users
+- Closed economy with complex player-driven markets
+- PLEX acts as premium currency with peer-to-peer trading
+- 20+ years of successful operation without regulatory intervention
+- Sophisticated economic reports published regularly
+
+GoCoin borrows from EVE's transparency and long-running closed economy model.
+
+---
+
+## 13. Related documents
+
+| Document | Relationship |
+|:---------|:-------------|
+| [README](../README.md) | Project overview including loyalty system summary |
+| [Concept](CONCEPT.md) | Strategic rationale for the ecosystem |
+| [Architecture and Security](ARCHITECTURE_AND_SECURITY.md) | Technical foundation |
+| [Business Model](BUSINESS_MODEL.md) | Revenue streams that fund the loyalty program |
+| [Legal Compliance](LEGAL_COMPLIANCE.md) | Detailed regulatory analysis |
+| [Smart Contracts](SMART_CONTRACTS.md) | Technical specifications for coin issuance/burn |
+| [Wire Protocol](WIRE_PROTOCOL.md) | Protocol specifications for coin transactions |
+| [Roadmap](ROADMAP.md) | Implementation timeline |
+
+---
+
+*GoNode Loyalty System v2 - April 2026 (replaces v1 crypto token design)*
 *IT and More Systems, Recklinghausen, Germany*

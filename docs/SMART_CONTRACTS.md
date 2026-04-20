@@ -1,1088 +1,815 @@
-# GoNode Smart Contracts
+# GoNode Ledger Architecture
 
 **Document version:** Season 1 | April 2026
-**Component:** GoNode smart contract specifications for Arbitrum One
+**Component:** GoCoin ledger technical specification (database and optional permissioned blockchain)
 **Copyright:** 2026 Sascha Daemgen, IT and More Systems, Recklinghausen
 **License:** AGPL-3.0
+
+> **Note on naming:** This document was previously titled "Smart Contracts" when GoCoin was designed as an ERC-20 token on Arbitrum. Following the redesign to a closed-loop loyalty system, the file name is retained for cross-reference stability, but the contents now describe the loyalty ledger architecture - either a relational database (Phase 1) or an optional permissioned blockchain (Phase 3+). No Solidity smart contracts are deployed in the new design.
 
 ---
 
 ## Overview
 
-This document specifies the smart contract interfaces that form the economic layer of GoNode. All contracts deploy to Arbitrum One mainnet and follow OpenZeppelin battle-tested patterns. Every function signature, event, and storage layout is documented here as the reference for auditors, integrators, and alternative implementations.
+The GoCoin ledger tracks loyalty point balances, issuances, redemptions, and peer-to-peer transfers for all users and operators in the SimpleGo ecosystem. The design prioritises simplicity, legal clarity, operational reliability, and user experience over blockchain ideology.
 
-The economic layer consists of six contracts with distinct responsibilities:
+Two implementation paths are defined:
 
-| Contract | Purpose | Approximate LOC |
-|:---------|:--------|:---------------|
-| GoCoin | ERC-20 token with burn tracking | 150 |
-| NodeStaking | Node registration and stake management | 300 |
-| NodeRewards | Monthly emission and held-back payments | 400 |
-| Subscription | Burn-and-mint for Pro subscriptions | 250 |
-| Slashing | Evidence-based penalty enforcement | 350 |
-| Governance | DAO voting and parameter updates | 300 |
+- **Phase 1 (initial):** Relational database (PostgreSQL) - simple, fast, well-understood, aligned with how all major loyalty programs operate (Payback, Miles & More, Steam Wallet)
+- **Phase 3+ (optional):** Permissioned blockchain (Hyperledger Fabric or similar) - for additional transparency and tamper-evidence if community demand warrants
 
-**Language:** Solidity 0.8.24+
-**Framework:** Hardhat for development, Foundry for testing
-**Deployment:** Arbitrum One (chain ID 42161)
-**Upgrade strategy:** Non-upgradeable for economic logic, timelock-guarded for parameters
+Both paths produce the same legal classification (closed-loop loyalty under PSD2 Art. 3(k) / ZAG § 2), the same user experience, and the same business behaviour. The choice is operational, not regulatory.
 
 ---
 
-## 1. Contract architecture
+## 1. Core design principles
 
-### 1.1 Deployment topology
+### 1.1 Simplicity over complexity
 
-```
-+------------------------------------------------------+
-|                     GoCoin (ERC-20)                  |
-|  Burnable, non-mintable after initial distribution   |
-+------------------------------------------------------+
-          ^              ^               ^
-          |              |               |
-   +------+------+  +----+-----+  +-----+------+
-   |             |  |          |  |            |
-   | NodeStaking |  | Rewards  |  | Subscription
-   |             |  |          |  |            |
-   +------+------+  +----+-----+  +-----+------+
-          ^              ^               ^
-          |              |               |
-          +------+-------+-------+-------+
-                 |               |
-                 v               v
-          +-------------+  +-------------+
-          | Slashing    |  | Governance  |
-          |             |  |             |
-          +-------------+  +-------------+
-```
+The loyalty ledger is the opposite of the previous smart contract design:
 
-### 1.2 Deployment sequence
+| Old design | New design |
+|:-----------|:-----------|
+| 5 Solidity contracts on Arbitrum | 1 database or 1 permissioned chain |
+| 1,088 lines of Solidity | ~500 lines of application code |
+| Gas fees on every operation | Free operations |
+| Immutable after deployment | Update normally with software releases |
+| Required audits at 50-200k EUR each | Standard software testing |
+| MEV concerns, flash loan risks | Not applicable |
+| Private key management | Standard authentication |
 
-Contracts must be deployed in dependency order:
+### 1.2 Legal clarity
 
-```
-1. GoCoin (no dependencies)
-2. NodeStaking (depends on GoCoin)
-3. NodeRewards (depends on GoCoin, NodeStaking)
-4. Subscription (depends on GoCoin, Uniswap V3 Router, EURC)
-5. Slashing (depends on NodeStaking, NodeRewards)
-6. Governance (depends on GoCoin)
-7. Transfer ownership: Governance -> all contracts (Phase 4 only)
-```
+The design deliberately avoids any features that could trigger crypto-asset classification:
 
-### 1.3 Access control roles
+- No public blockchain
+- No cryptographic proof of balance "ownership" (database record, not token)
+- No transferability outside the system
+- No external interoperability with crypto wallets
+- No backing by other assets
+- No bearer-instrument properties
 
-| Role | Held by (Phase 0-3) | Held by (Phase 4+) |
-|:-----|:--------------------|:-------------------|
-| DEFAULT_ADMIN | Foundation multisig (3/5) | Burned (address(0)) |
-| REWARD_DISTRIBUTOR | Foundation service account | On-chain distributor with timelock |
-| SLASH_SUBMITTER | 2/3 BFT validator quorum | Same |
-| PAUSE_GUARDIAN | Foundation multisig | Removed entirely |
-| PARAMETER_UPDATER | Foundation multisig + timelock | DAO vote + timelock |
+### 1.3 User experience
+
+Users interact with GoCoin like Payback points or Steam Wallet credits:
+
+- View balance in account dashboard
+- See transaction history
+- Click to redeem for items
+- Post offers on marketplace
+- No wallet software, no seed phrases, no gas fees
+
+### 1.4 Operational reliability
+
+Standard enterprise software practices:
+
+- Daily backups with point-in-time recovery
+- High availability with failover
+- Monitoring and alerting
+- Standard disaster recovery procedures
+- Audit logs for all operations
 
 ---
 
-## 2. GoCoin ERC-20 contract
+## 2. Phase 1: Database architecture
 
-### 2.1 Purpose
+### 2.1 Technology stack
 
-Standard ERC-20 token with these additions:
+| Layer | Choice | Rationale |
+|:------|:-------|:----------|
+| Database | PostgreSQL 16+ | ACID compliance, mature, free, widely known |
+| Application | Go (Golang) | Consistent with GoNode stack, performant |
+| API | REST + GraphQL | Standard integration patterns |
+| Authentication | GoUNITY certificates | Consistent with ecosystem identity |
+| Deployment | Kubernetes | Standard container orchestration |
+| Backups | pgBackRest + offsite | Hourly incremental, daily full |
 
-- Burn tracking (total burn, per-reason burn)
-- Non-mintable after initial supply distribution
-- Metadata URI for token info
+### 2.2 Schema overview
 
-### 2.2 Interface
+The core schema consists of seven tables:
 
-```solidity
-// SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.24;
-
-interface IGoCoin is IERC20, IERC20Metadata {
-    // Standard ERC-20 events inherited
-
-    event TokensBurned(
-        address indexed from,
-        uint256 amount,
-        bytes32 indexed reason
-    );
-
-    // Reasons are bytes32 for efficiency:
-    // "SUB" = subscription burn
-    // "SLASH" = slashing burn
-    // "HELD" = held-back forfeiture
-    // "ENT" = enterprise revenue burn
-    // "AI" = AI service revenue burn
-    // "MAN" = manual burn
-
-    function maxSupply() external pure returns (uint256);  // 100M × 10^18
-    function totalBurned() external view returns (uint256);
-    function burnedByReason(bytes32 reason) external view returns (uint256);
-
-    function burn(uint256 amount, bytes32 reason) external;
-    function burnFrom(address from, uint256 amount, bytes32 reason) external;
-}
+**accounts** - User and operator accounts
+```sql
+CREATE TABLE accounts (
+    account_id UUID PRIMARY KEY,
+    account_type VARCHAR(20) NOT NULL CHECK (account_type IN ('user', 'operator', 'foundation')),
+    identifier_hash BYTEA NOT NULL,              -- hashed link to GoUNITY identity
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'closed')),
+    metadata JSONB,                              -- flexible additional info
+    UNIQUE (identifier_hash)
+);
 ```
 
-### 2.3 Storage layout
-
-```solidity
-contract GoCoin {
-    // Slot 0: inherited from ERC20
-    mapping(address => uint256) private _balances;
-
-    // Slot 1: inherited
-    mapping(address => mapping(address => uint256)) private _allowances;
-
-    // Slot 2: inherited
-    uint256 private _totalSupply;
-
-    // Slot 3: inherited metadata
-    // ...
-
-    // New slots for GoNode:
-    uint256 public totalBurned;
-    mapping(bytes32 => uint256) public burnedByReason;
-}
+**balances** - Current GoCoin balance per account
+```sql
+CREATE TABLE balances (
+    account_id UUID PRIMARY KEY REFERENCES accounts(account_id),
+    amount BIGINT NOT NULL DEFAULT 0 CHECK (amount >= 0),
+    locked_amount BIGINT NOT NULL DEFAULT 0 CHECK (locked_amount >= 0),  -- coins on marketplace holds
+    holding_period_release_at TIMESTAMPTZ,        -- for operator earnings
+    last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 ```
 
-### 2.4 Key functions
+**transactions** - Immutable audit log of all coin movements
+```sql
+CREATE TABLE transactions (
+    tx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tx_type VARCHAR(30) NOT NULL,    -- earn_purchase, earn_operator, earn_community, redeem, transfer, burn
+    from_account_id UUID REFERENCES accounts(account_id),
+    to_account_id UUID REFERENCES accounts(account_id),
+    amount BIGINT NOT NULL CHECK (amount > 0),
+    reference_id VARCHAR(100),         -- link to purchase, redemption, etc.
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metadata JSONB,
+    CONSTRAINT from_or_system CHECK (from_account_id IS NOT NULL OR tx_type LIKE 'earn_%')
+);
 
-**`burn(uint256 amount, bytes32 reason)`**
-
-```
-Effect:
-  - Decreases msg.sender balance by amount
-  - Decreases totalSupply by amount
-  - Increases totalBurned by amount
-  - Increases burnedByReason[reason] by amount
-  - Emits TokensBurned(msg.sender, amount, reason)
-
-Gas cost: ~40,000
-
-Reverts if:
-  - msg.sender balance < amount
-  - amount == 0 (protection against wasteful calls)
-```
-
-**`burnFrom(address from, uint256 amount, bytes32 reason)`**
-
-```
-Effect:
-  - Requires allowance from `from` to msg.sender >= amount
-  - Decreases `from` balance by amount
-  - Decreases totalSupply by amount
-  - Increases totalBurned by amount
-  - Increases burnedByReason[reason] by amount
-  - Emits TokensBurned(from, amount, reason)
-
-Gas cost: ~50,000
+CREATE INDEX idx_tx_from ON transactions(from_account_id);
+CREATE INDEX idx_tx_to ON transactions(to_account_id);
+CREATE INDEX idx_tx_type_time ON transactions(tx_type, timestamp);
 ```
 
-### 2.5 Constructor
-
-```solidity
-constructor(
-    address foundationTreasury,
-    address teamVestingContract,
-    address stakingContract,
-    address rewardsContract
-) ERC20("GoCoin", "GC") {
-    uint256 totalMint = MAX_SUPPLY;  // 100M × 10^18
-
-    // Initial circulating: 30M
-    _mint(foundationTreasury, 30_000_000 * 10**18);
-
-    // Reward pool: 40M (held in Rewards contract)
-    _mint(rewardsContract, 40_000_000 * 10**18);
-
-    // Foundation treasury vest: 15M
-    _mint(foundationTreasury, 15_000_000 * 10**18);
-
-    // Team vesting: 10M (held in vesting contract)
-    _mint(teamVestingContract, 10_000_000 * 10**18);
-
-    // Ecosystem grants: 5M (held in Governance)
-    _mint(address(governance), 5_000_000 * 10**18);
-
-    require(totalSupply() == MAX_SUPPLY, "minting error");
-
-    // After constructor, no more minting possible (no mint function exposed)
-}
+**issuance_log** - Tracks total supply against cap
+```sql
+CREATE TABLE issuance_log (
+    log_id SERIAL PRIMARY KEY,
+    category VARCHAR(30) NOT NULL,   -- purchase_reward, operator_reward, community, reserve
+    amount BIGINT NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    cumulative_issued BIGINT NOT NULL,
+    notes TEXT
+);
 ```
+
+**redemptions** - Items redeemed by users
+```sql
+CREATE TABLE redemptions (
+    redemption_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    account_id UUID NOT NULL REFERENCES accounts(account_id),
+    item_sku VARCHAR(100) NOT NULL,
+    coin_cost BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    redeemed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    fulfilled_at TIMESTAMPTZ,
+    tx_id UUID REFERENCES transactions(tx_id)
+);
+```
+
+**marketplace_listings** - Active P2P offers
+```sql
+CREATE TABLE marketplace_listings (
+    listing_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    seller_account_id UUID NOT NULL REFERENCES accounts(account_id),
+    listing_type VARCHAR(30) NOT NULL,   -- auction, fixed, barter
+    offered_item JSONB NOT NULL,          -- description of what's offered
+    asking_price JSONB NOT NULL,          -- what the seller wants in return
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ,
+    status VARCHAR(20) NOT NULL DEFAULT 'active',
+    completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_listings_active ON marketplace_listings(status, created_at) WHERE status = 'active';
+```
+
+**audit_log** - Compliance-grade audit trail
+```sql
+CREATE TABLE audit_log (
+    audit_id BIGSERIAL PRIMARY KEY,
+    event_type VARCHAR(50) NOT NULL,
+    actor_id UUID REFERENCES accounts(account_id),
+    target_type VARCHAR(50),
+    target_id UUID,
+    details JSONB NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ip_hash BYTEA                          -- hashed IP for abuse prevention
+);
+
+CREATE INDEX idx_audit_time ON audit_log(timestamp);
+CREATE INDEX idx_audit_actor ON audit_log(actor_id, timestamp);
+```
+
+### 2.3 Core operations
+
+**Earning coins from a purchase:**
+
+```sql
+-- atomic transaction
+BEGIN;
+
+-- 1. Verify purchase is valid (from payment processor webhook)
+SELECT verify_payment_confirmed(:payment_id);
+
+-- 2. Calculate loyalty reward based on purchase type
+SELECT calculate_reward(:payment_type, :payment_amount) INTO :reward_amount;
+
+-- 3. Record the transaction
+INSERT INTO transactions (tx_type, to_account_id, amount, reference_id, metadata)
+VALUES ('earn_purchase', :account_id, :reward_amount, :payment_id,
+        jsonb_build_object('payment_type', :payment_type, 'payment_amount', :payment_amount));
+
+-- 4. Update balance
+UPDATE balances
+SET amount = amount + :reward_amount, last_updated = NOW()
+WHERE account_id = :account_id;
+
+-- 5. Update issuance log
+INSERT INTO issuance_log (category, amount, cumulative_issued)
+SELECT 'purchase_reward', :reward_amount,
+       COALESCE((SELECT cumulative_issued FROM issuance_log ORDER BY log_id DESC LIMIT 1), 0) + :reward_amount;
+
+-- 6. Write audit log
+INSERT INTO audit_log (event_type, actor_id, target_type, target_id, details)
+VALUES ('coin_earned', NULL, 'account', :account_id,
+        jsonb_build_object('amount', :reward_amount, 'source', 'purchase'));
+
+COMMIT;
+```
+
+**Operator monthly rewards:**
+
+```sql
+-- Batch operation run by cron monthly
+INSERT INTO transactions (tx_type, to_account_id, amount, reference_id, metadata)
+SELECT 'earn_operator',
+       op.account_id,
+       calculate_operator_reward(op.uptime_pct, op.audit_score, op.data_volume),
+       'monthly_reward_' || TO_CHAR(NOW(), 'YYYY_MM'),
+       jsonb_build_object('uptime', op.uptime_pct, 'month', TO_CHAR(NOW(), 'YYYY-MM'))
+FROM operator_performance op
+WHERE op.month = DATE_TRUNC('month', NOW() - INTERVAL '1 month');
+
+-- Apply 30-day holding period
+UPDATE balances
+SET holding_period_release_at = NOW() + INTERVAL '30 days'
+WHERE account_id IN (SELECT to_account_id FROM transactions WHERE tx_type = 'earn_operator' AND timestamp > NOW() - INTERVAL '1 hour');
+```
+
+**Redeeming coins:**
+
+```sql
+BEGIN;
+
+-- 1. Check balance
+SELECT amount INTO :current_balance FROM balances WHERE account_id = :account_id FOR UPDATE;
+
+IF :current_balance < :item_cost THEN
+    ROLLBACK;
+    RAISE EXCEPTION 'Insufficient balance';
+END IF;
+
+-- 2. Deduct from balance
+UPDATE balances SET amount = amount - :item_cost WHERE account_id = :account_id;
+
+-- 3. Record transaction (burn)
+INSERT INTO transactions (tx_type, from_account_id, amount, reference_id, metadata)
+VALUES ('redeem', :account_id, :item_cost, :item_sku,
+        jsonb_build_object('item', :item_sku));
+
+-- 4. Create redemption record
+INSERT INTO redemptions (account_id, item_sku, coin_cost, status)
+VALUES (:account_id, :item_sku, :item_cost, 'pending');
+
+-- 5. Queue fulfillment
+INSERT INTO fulfillment_queue (redemption_id, priority) VALUES (...);
+
+COMMIT;
+```
+
+**Peer-to-peer marketplace transfer:**
+
+```sql
+BEGIN;
+
+-- 1. Lock the listing
+UPDATE marketplace_listings SET status = 'pending' WHERE listing_id = :listing_id AND status = 'active';
+
+-- 2. Verify both parties have required items
+-- (Details depend on specific item types)
+
+-- 3. Execute the swap atomically
+-- Case: buyer pays GoCoin, seller delivers item
+UPDATE balances SET amount = amount - :coin_amount WHERE account_id = :buyer_id;
+UPDATE balances SET amount = amount + (:coin_amount - :marketplace_fee) WHERE account_id = :seller_id;
+
+-- 4. Record transactions
+INSERT INTO transactions (tx_type, from_account_id, to_account_id, amount, reference_id)
+VALUES ('transfer', :buyer_id, :seller_id, :coin_amount - :marketplace_fee, :listing_id),
+       ('burn', :buyer_id, NULL, :marketplace_fee, 'marketplace_fee_' || :listing_id);
+
+-- 5. Transfer the item (update item ownership records)
+UPDATE items SET owner_id = :buyer_id WHERE item_id = :item_id;
+
+-- 6. Complete listing
+UPDATE marketplace_listings SET status = 'completed', completed_at = NOW() WHERE listing_id = :listing_id;
+
+COMMIT;
+```
+
+### 2.4 Supply cap enforcement
+
+The 100M GoCoin soft cap is enforced at the application layer:
+
+```sql
+CREATE OR REPLACE FUNCTION check_supply_cap()
+RETURNS TRIGGER AS $$
+DECLARE
+    current_supply BIGINT;
+    supply_cap CONSTANT BIGINT := 100000000;  -- 100M GoCoin
+BEGIN
+    IF NEW.tx_type LIKE 'earn_%' THEN
+        SELECT cumulative_issued INTO current_supply FROM issuance_log ORDER BY log_id DESC LIMIT 1;
+        IF (current_supply + NEW.amount) > supply_cap THEN
+            RAISE EXCEPTION 'Supply cap would be exceeded';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER enforce_supply_cap
+BEFORE INSERT ON transactions
+FOR EACH ROW EXECUTE FUNCTION check_supply_cap();
+```
+
+### 2.5 Performance targets
+
+| Operation | Target latency | Target throughput |
+|:----------|:---------------|:------------------|
+| Balance lookup | <5ms | 10,000+ req/s |
+| Earn transaction | <50ms | 1,000 req/s |
+| Redemption | <100ms | 500 req/s |
+| Marketplace listing | <200ms | 100 req/s |
+| Marketplace trade | <500ms | 50 req/s |
+| Monthly batch (operator rewards) | <5 minutes | 10,000 operators |
+
+PostgreSQL easily handles these loads with standard hardware and appropriate indexing.
+
+### 2.6 High availability
+
+**Replication:**
+- Streaming replication to 2 standby nodes
+- Automatic failover via repmgr or Patroni
+- Target RTO: 60 seconds
+- Target RPO: 0 (synchronous replication to primary standby)
+
+**Geographic distribution:**
+- Primary: Germany (Frankfurt datacenter)
+- Secondary: Germany (Hamburg datacenter)
+- Backup: EU (Amsterdam, read-only)
+
+**Monitoring:**
+- Prometheus + Grafana stack
+- Alerting on replication lag, query performance, disk usage
+- 24/7 on-call rotation after Phase 2
+
+### 2.7 Backup and recovery
+
+**Backup strategy:**
+- Hourly incremental backups (pgBackRest)
+- Daily full backups to offsite storage
+- Weekly cold backup to separate region
+- Backup integrity verified weekly
+
+**Recovery procedures:**
+- Point-in-time recovery tested monthly
+- Full disaster recovery test quarterly
+- Target RTO: 4 hours for complete system rebuild
+- Documentation kept current with infrastructure
+
+### 2.8 Data retention
+
+In line with GDPR and German commercial law:
+
+| Data | Retention | Reason |
+|:-----|:----------|:-------|
+| Active balances | Ongoing | Service continuity |
+| Transaction records | 10 years | HGB § 257, AO § 147 |
+| Audit logs | 5 years | DSA compliance |
+| Marketplace listings | 2 years after close | Dispute resolution |
+| Account metadata | Until account closure + 30 days | User convenience |
 
 ---
 
-## 3. NodeStaking contract
+## 3. Phase 3+ (optional): Permissioned blockchain
 
-### 3.1 Purpose
+If strategic need arises (community demand for transparency, enterprise requirement for verifiable ledger, regulatory preference), a permissioned blockchain implementation is available as Phase 3+ option.
 
-Manages node registration, stake deposits, exit cooldowns, and slashing execution. Every active service node must have 10,000 GoCoin staked here.
+### 3.1 Technology evaluation
 
-### 3.2 Interface
+Three candidates evaluated:
 
-```solidity
-interface INodeStaking {
-    struct StakeInfo {
-        uint256 amount;              // Current stake amount
-        uint256 exitRequestedAt;     // 0 if not exiting
-        bytes32 operatorPubKey;      // Ed25519 public key (32 bytes)
-        uint32 registeredEpoch;      // Epoch of registration
-        bool active;                 // False after exit requested
-    }
+| Technology | Pros | Cons |
+|:-----------|:-----|:-----|
+| Hyperledger Fabric | Mature, Linux Foundation backing, strong enterprise adoption | Complex setup, steeper learning curve |
+| Hyperledger Besu | Ethereum-compatible, familiar to developers, simpler | Less specialized for permissioned use |
+| R3 Corda | Designed for financial use cases | Smaller community, licensing complexity |
 
-    event NodeRegistered(
-        address indexed operator,
-        bytes32 operatorPubKey,
-        uint32 epoch
-    );
+**Preferred candidate:** Hyperledger Fabric, based on maturity and alignment with loyalty program use case.
 
-    event NodeExitRequested(
-        address indexed operator,
-        uint256 withdrawableAt
-    );
+### 3.2 Architecture principles
 
-    event NodeExited(address indexed operator);
+If implemented, the permissioned chain would:
 
-    event StakeSlashed(
-        address indexed operator,
-        uint256 amount,
-        bytes32 reason
-    );
+- Run validator nodes operated by a trusted consortium (Foundation + 3-5 partner organisations)
+- Use Practical Byzantine Fault Tolerance (PBFT) consensus
+- Process 1,000-5,000 transactions per second (adequate for loyalty use case)
+- Maintain privacy through channel-based data separation
+- Provide on-chain audit trail visible to participants
+- Synchronise with the relational database for queries
 
-    function STAKE_AMOUNT() external pure returns (uint256);  // 10,000 × 10^18
-    function EXIT_COOLDOWN() external pure returns (uint256); // 48 hours
-    function HELDBACK_COOLDOWN() external pure returns (uint256); // 270 days
+### 3.3 Governance
 
-    function getStakeInfo(address operator) external view returns (StakeInfo memory);
-    function isActive(address operator) external view returns (bool);
-    function activeNodeCount() external view returns (uint256);
-    function getCurrentEpoch() external view returns (uint32);
+Consortium governance for validator nodes:
 
-    function registerNode(bytes32 operatorPubKey) external;
-    function requestExit() external;
-    function withdrawStake() external;
+- Foundation + 3-5 partner organisations as validators
+- Governance board decides on major changes
+- Validators compensated in EUR for operations (not GoCoin)
+- Consortium members have pseudonymous visibility
+- Foundation remains the sole coin issuer
 
-    // Only callable by Slashing contract
-    function slash(address operator, uint256 amount, bytes32 reason) external;
-}
-```
+### 3.4 GDPR considerations
 
-### 3.3 State machine
+Blockchain immutability creates GDPR challenges. Mitigations:
 
-```
-UNREGISTERED
-    |
-    | registerNode() + 10k GC transfer
-    v
-ACTIVE
-    |
-    | requestExit()
-    v
-EXITING (48h cooldown)
-    |
-    | 48h elapses + withdrawStake()
-    v
-WITHDRAWN (UNREGISTERED again)
+- Store only hashed references to personal data on-chain
+- Personal data remains in the off-chain database with normal deletion capability
+- On-chain data pseudonymous (account IDs, not names)
+- EDPB Guidelines 02/2025 on blockchain guidance followed
+- DPIA conducted before launch
 
-From ACTIVE:
-    | slash() from Slashing contract
-    v
-    (stake reduced, may still be ACTIVE if stake > minimum)
+### 3.5 Why not Phase 1
 
-From EXITING:
-    | slash() still possible during cooldown
-    v
-    (reduced withdrawal amount)
-```
+Permissioned blockchain adds significant complexity for marginal benefit at small scale:
 
-### 3.4 Key functions
+- More infrastructure (validator nodes, consensus, networking)
+- More operational expertise required
+- More compliance considerations
+- Slower transactions
+- Higher cost per operation
 
-**`registerNode(bytes32 operatorPubKey)`**
+The relational database achieves 95% of the benefits (transparent records, audit trails, immutability through append-only design) at 5% of the complexity. The permissioned chain makes sense only when:
 
-```solidity
-function registerNode(bytes32 operatorPubKey) external {
-    require(!stakes[msg.sender].active, "already active");
-    require(operatorPubKey != bytes32(0), "invalid pubkey");
+- Community clearly values on-chain transparency over database transparency
+- Validator consortium provides meaningful decentralisation
+- Scale justifies the operational overhead
 
-    // Transfer stake from operator
-    goCoin.transferFrom(msg.sender, address(this), STAKE_AMOUNT);
-
-    // Record stake
-    stakes[msg.sender] = StakeInfo({
-        amount: STAKE_AMOUNT,
-        exitRequestedAt: 0,
-        operatorPubKey: operatorPubKey,
-        registeredEpoch: getCurrentEpoch(),
-        active: true
-    });
-    activeNodeCount_++;
-
-    emit NodeRegistered(msg.sender, operatorPubKey, getCurrentEpoch());
-}
-```
-
-Gas cost: approximately 150,000 (dominated by storage write + ERC-20 transfer).
-
-**`requestExit()`**
-
-```solidity
-function requestExit() external {
-    require(stakes[msg.sender].active, "not active");
-    require(stakes[msg.sender].exitRequestedAt == 0, "already exiting");
-
-    stakes[msg.sender].exitRequestedAt = block.timestamp;
-    stakes[msg.sender].active = false;
-    activeNodeCount_--;
-
-    emit NodeExitRequested(
-        msg.sender,
-        block.timestamp + EXIT_COOLDOWN
-    );
-}
-```
-
-Gas cost: approximately 50,000.
-
-**`withdrawStake()`**
-
-```solidity
-function withdrawStake() external {
-    StakeInfo memory info = stakes[msg.sender];
-    require(info.exitRequestedAt > 0, "exit not requested");
-    require(
-        block.timestamp >= info.exitRequestedAt + EXIT_COOLDOWN,
-        "cooldown active"
-    );
-
-    uint256 amount = info.amount;
-    delete stakes[msg.sender];
-
-    goCoin.transfer(msg.sender, amount);
-    emit NodeExited(msg.sender);
-}
-```
-
-Gas cost: approximately 60,000.
+These conditions are more likely to emerge in Phase 3+ as the ecosystem matures.
 
 ---
 
-## 4. Subscription contract (burn-and-mint core)
+## 4. Integration with ecosystem
 
-### 4.1 Purpose
+### 4.1 Payment integration
 
-The central economic mechanism: accepts EURC, buys GoCoin on Uniswap, burns it, and activates Pro subscription. This is the contract that users interact with for Pro.
-
-### 4.2 Interface
-
-```solidity
-interface ISubscription {
-    event ProActivated(
-        address indexed user,
-        uint256 expiresAt,
-        uint256 goCoinBurned,
-        uint256 eurcPaid
-    );
-
-    event ProExtended(
-        address indexed user,
-        uint256 newExpiresAt,
-        uint256 goCoinBurned,
-        uint256 eurcPaid
-    );
-
-    event AnnualProActivated(
-        address indexed user,
-        uint256 expiresAt,
-        uint256 goCoinBurned,
-        uint256 eurcPaid
-    );
-
-    function MONTHLY_PRICE_EURC() external pure returns (uint256); // 5 × 10^6
-    function ANNUAL_PRICE_EURC() external pure returns (uint256);  // 50 × 10^6
-    function MONTHLY_DURATION() external pure returns (uint256);   // 30 days
-    function ANNUAL_DURATION() external pure returns (uint256);    // 365 days
-
-    function proExpires(address user) external view returns (uint256);
-    function isProUser(address user) external view returns (bool);
-    function totalBurnedForSubscriptions() external view returns (uint256);
-    function totalSubscriptionCount() external view returns (uint256);
-
-    function subscribe() external;          // Monthly, requires EURC approval
-    function subscribeAnnual() external;    // Annual, 50 EURC
-    function subscribeFor(address user) external;  // Gift/pay-for-someone-else
-}
-```
-
-### 4.3 Key function
-
-**`subscribe()` - The core burn-and-mint mechanism**
-
-```solidity
-function subscribe() external nonReentrant {
-    _executeSubscription(msg.sender, MONTHLY_PRICE_EURC, MONTHLY_DURATION);
-}
-
-function _executeSubscription(
-    address user,
-    uint256 priceEurc,
-    uint256 duration
-) internal {
-    // Pull EURC from user
-    eurc.transferFrom(msg.sender, address(this), priceEurc);
-
-    // Approve Uniswap to spend EURC
-    eurc.approve(address(uniswapRouter), priceEurc);
-
-    // Build swap params
-    ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-        tokenIn: address(eurc),
-        tokenOut: address(goCoin),
-        fee: UNISWAP_POOL_FEE,
-        recipient: address(this),
-        deadline: block.timestamp + 300,
-        amountIn: priceEurc,
-        amountOutMinimum: 0,  // Accept any amount (private mempool protection)
-        sqrtPriceLimitX96: 0
-    });
-
-    // Execute swap on Uniswap V3
-    uint256 goCoinReceived = uniswapRouter.exactInputSingle(params);
-
-    // Burn all the GoCoin
-    goCoin.burn(goCoinReceived, bytes32("SUB"));
-
-    totalBurnedForSubscriptions += goCoinReceived;
-    totalSubscriptionCount += 1;
-
-    // Activate Pro subscription
-    uint256 newExpiry;
-    uint256 currentExpiry = proExpires[user];
-    if (currentExpiry > block.timestamp) {
-        // Extend existing
-        newExpiry = currentExpiry + duration;
-        emit ProExtended(user, newExpiry, goCoinReceived, priceEurc);
-    } else {
-        // Activate new
-        newExpiry = block.timestamp + duration;
-        emit ProActivated(user, newExpiry, goCoinReceived, priceEurc);
-    }
-    proExpires[user] = newExpiry;
-}
-```
-
-Gas cost: approximately 250,000 (includes Uniswap swap + burn + storage write).
-
-### 4.4 MEV protection
-
-The `amountOutMinimum` is set to 0 to prevent MEV-based griefing. Protection against sandwich attacks is provided by:
-
-1. **Private mempool:** Foundation-operated RPC for Pro transactions routes through Flashbots Protect or equivalent
-2. **Pool depth:** 500,000 EURC initial liquidity makes small trades negligible price impact
-3. **Multi-pool routing:** If primary pool has issues, fallback to other pools
-4. **Circuit breaker:** If unusual price movement detected, reject transaction with informative error
-
-### 4.5 Revenue flow visualization
+Purchase rewards triggered by payment processor webhooks:
 
 ```
-User wallet (5 EURC)
-    |
-    | subscribe() call
-    v
-Subscription contract (receives 5 EURC)
-    |
-    | exactInputSingle() to Uniswap V3
-    v
-Uniswap V3 EURC/GC pool
-    |
-    | GoCoin minted at current market rate
-    v
-Subscription contract (now holds X GoCoin, no EURC)
-    |
-    | burn(X, "SUB")
-    v
-GoCoin balance decreases, totalBurned increases
-    |
-    | proExpires[user] = block.timestamp + 30 days
-    v
-User sees: "Pro active until DD.MM.YYYY"
+User purchases Pro subscription
+   ↓
+Payment processor (Stripe/PayPal/SEPA) confirms payment
+   ↓
+Webhook to GoNode backend
+   ↓
+Backend verifies payment authenticity
+   ↓
+Loyalty coin reward calculated and issued
+   ↓
+User notified of coin earn
 ```
+
+### 4.2 GoUNITY identity
+
+Account identifiers link to GoUNITY certificates:
+
+```
+User authenticates with GoUNITY certificate
+   ↓
+Certificate DN hashed to identifier_hash
+   ↓
+Account record located or created
+   ↓
+Session established with account context
+```
+
+No plaintext user data stored in the ledger - only the hashed identifier.
+
+### 4.3 Hardware binding (GoKey integration)
+
+For premium operations, hardware-anchored identity via GoKey:
+
+```
+High-value operation requested (large marketplace trade, redemption)
+   ↓
+GoKey signature required in addition to session
+   ↓
+Signature verified against account's registered GoKey
+   ↓
+Operation executed if signature valid
+```
+
+This creates an additional security layer for high-value actions without affecting routine operations.
+
+### 4.4 Marketplace integration
+
+Marketplace listings and trades use the core ledger:
+
+- Listing creates a reservation on seller's coins/items
+- Acceptance triggers atomic swap
+- Dispute resolution can reverse trades within time window
+- Audit log records all marketplace activity
 
 ---
 
-## 5. NodeRewards contract
+## 5. Security
 
-### 5.1 Purpose
+### 5.1 Threat model
 
-Distributes monthly GoCoin emissions to active service nodes, implements the held-back payment structure, and manages claim logic.
+Relevant threats for the loyalty ledger:
 
-### 5.2 Interface
+| Threat | Likelihood | Impact | Mitigation |
+|:-------|:-----------|:-------|:-----------|
+| SQL injection | Low | High | Parameterized queries, input validation |
+| Account takeover | Medium | High | Multi-factor authentication, anomaly detection |
+| Database compromise | Low | High | Encryption at rest, access controls, audit logs |
+| Insider threat | Low | High | Separation of duties, audit logging, least privilege |
+| Marketplace fraud | Medium | Medium | Dispute resolution, rate limiting, pattern detection |
+| DDoS on marketplace | Medium | Low | Rate limiting, CDN, autoscaling |
+| Ledger inconsistency | Low | High | Atomic transactions, daily reconciliation, backups |
 
-```solidity
-interface INodeRewards {
-    struct EmissionSchedule {
-        uint32 startMonth;
-        uint32 endMonth;
-        uint256 monthlyAmount;
-    }
+### 5.2 Access control
 
-    event RewardsDistributed(
-        uint32 indexed month,
-        address[] nodes,
-        uint256 totalDistributed
-    );
+**Database access tiers:**
 
-    event HeldBackClaimed(
-        address indexed operator,
-        uint256 amount
-    );
+| Role | Permissions |
+|:-----|:------------|
+| Application (read-write) | Transactions, balances (no direct deletion) |
+| Read-only reporting | Read-only access to all tables |
+| Admin (operations) | Schema changes, emergency operations (audited) |
+| Emergency access | Break-glass access with mandatory review |
 
-    event HeldBackBurned(
-        address indexed operator,
-        uint256 amount,
-        bytes32 reason
-    );
+**Principle of least privilege:** Developers work against development databases; production access is restricted and audited.
 
-    function monthlyEmissions(uint32 month) external view returns (uint256);
-    function earnings(address operator, uint32 month) external view returns (uint256);
-    function heldBackAmount(address operator) external view returns (uint256);
-    function nextHeldBackRelease(address operator) external view returns (uint32);
+### 5.3 Encryption
 
-    function distributeRewards(
-        uint32 month,
-        address[] calldata nodes,
-        uint256[] calldata weights
-    ) external;
+- **In transit:** TLS 1.3 for all connections
+- **At rest:** AES-256 disk encryption
+- **Sensitive fields:** Additional column-level encryption where applicable
+- **Backups:** Encrypted with separate keys
 
-    function claimHeldBack() external;
-    function burnHeldBack(address operator) external; // called by Slashing
-}
-```
+### 5.4 Audit and monitoring
 
-### 5.3 Distribution logic
+- All operations logged to `audit_log` table
+- External audit log mirror (append-only, separate system)
+- Anomaly detection on unusual patterns
+- Regular access reviews
+- Quarterly security audits
 
-Each month, the Reward Distributor role calls `distributeRewards` with the month's emission and the per-node weights:
+### 5.5 Incident response
 
-```solidity
-function distributeRewards(
-    uint32 month,
-    address[] calldata nodes,
-    uint256[] calldata weights
-) external onlyRewardDistributor {
-    require(nodes.length == weights.length, "length mismatch");
-    require(!distributed[month], "already distributed");
-
-    uint256 totalWeight = 0;
-    for (uint i = 0; i < weights.length; i++) {
-        totalWeight += weights[i];
-    }
-    require(totalWeight > 0, "zero total weight");
-
-    uint256 emission = monthlyEmissions[month];
-    require(emission > 0, "no emission for month");
-
-    for (uint i = 0; i < nodes.length; i++) {
-        uint256 earned = (emission * weights[i]) / totalWeight;
-        earnings[nodes[i]][month] = earned;
-
-        // Split between immediate payout and held-back
-        uint32 monthsActive = getMonthsActive(nodes[i]);
-        (uint256 payout, uint256 held) = splitPayout(earned, monthsActive);
-
-        if (payout > 0) {
-            goCoin.transfer(nodes[i], payout);
-        }
-        if (held > 0) {
-            heldBack[nodes[i]] += held;
-            nextHeldBackRelease[nodes[i]] = uint32(block.timestamp + 270 days);
-        }
-    }
-
-    distributed[month] = true;
-    emit RewardsDistributed(month, nodes, emission);
-}
-```
-
-### 5.4 Held-back logic
-
-```solidity
-function splitPayout(uint256 earned, uint32 monthsActive)
-    internal pure returns (uint256 payout, uint256 held)
-{
-    if (monthsActive < 4) {
-        // Months 1-3: 50% paid, 50% held
-        return (earned / 2, earned / 2);
-    } else if (monthsActive < 7) {
-        // Months 4-6: 75% paid, 25% held
-        return (earned * 3 / 4, earned / 4);
-    } else {
-        // Month 7+: 100% paid
-        return (earned, 0);
-    }
-}
-
-function claimHeldBack() external nonReentrant {
-    require(heldBack[msg.sender] > 0, "nothing held");
-    require(
-        block.timestamp >= nextHeldBackRelease[msg.sender],
-        "cooldown active"
-    );
-
-    uint256 amount = heldBack[msg.sender];
-    heldBack[msg.sender] = 0;
-    nextHeldBackRelease[msg.sender] = uint32(block.timestamp + 270 days);
-
-    goCoin.transfer(msg.sender, amount);
-    emit HeldBackClaimed(msg.sender, amount);
-}
-```
-
-### 5.5 Gas costs
-
-| Operation | Gas Cost | Notes |
-|:----------|:---------|:------|
-| distributeRewards (100 nodes) | ~3,000,000 | O(n), amortized 30k per node |
-| distributeRewards (1000 nodes) | ~30,000,000 | Approaches block gas limit |
-| claimHeldBack | ~80,000 | Single-operator operation |
-
-**Batching strategy:** For networks >500 nodes, distribution is split across multiple transactions for the same month to stay under block gas limit.
+- 24/7 monitoring after Phase 2
+- Incident response playbook documented
+- Communication templates for user notifications
+- Coordination with SECURITY.md processes
+- Post-incident review within 30 days
 
 ---
 
-## 6. Slashing contract
+## 6. Compliance integration
 
-### 6.1 Purpose
+### 6.1 DSA compliance
 
-Processes evidence of operator misbehaviour and executes slashing actions. Uses BFT validator quorum to prevent single-actor attacks.
+Marketplace integration points for DSA:
 
-### 6.2 Interface
+- Notice-and-action mechanism writes to `audit_log` and `moderation_actions`
+- Statement of reasons records kept
+- Transparency report data queries prepared
+- Automated content detection for prohibited items
 
-```solidity
-interface ISlashing {
-    enum OffenseType {
-        Equivocation,       // 5% slash
-        CorruptedData,      // 5% slash
-        Censorship,         // 10% slash
-        MaliciousAudit      // 20% slash
-    }
+### 6.2 GDPR compliance
 
-    struct Evidence {
-        address accused;
-        OffenseType offenseType;
-        bytes evidenceData;
-        bytes[] validatorSignatures;
-        uint256 submittedAt;
-    }
+- User data export queries: prepared and tested
+- Deletion requests: cascade through appropriate tables (preserving audit requirements)
+- Consent management: separate tables for explicit consents
+- Data minimisation: only necessary fields captured
 
-    event EvidenceSubmitted(
-        address indexed accuser,
-        address indexed accused,
-        OffenseType offense
-    );
+### 6.3 DAC7 reporting
 
-    event OffenseConfirmed(
-        address indexed accused,
-        OffenseType offense,
-        uint256 stakeSlashed,
-        uint256 heldBackBurned
-    );
+Annual reporting infrastructure:
 
-    event EvidenceDisputed(
-        address indexed accused,
-        uint256 disputeDeadline
-    );
+- Quarterly data aggregation for trading user summaries
+- Annual report generation aligned with BZSt schema
+- User notification workflow for reportable activity
+- 10-year data retention for reporting records
 
-    function submitEvidence(
-        address accused,
-        OffenseType offenseType,
-        bytes calldata evidenceData,
-        bytes[] calldata validatorSignatures
-    ) external;
+### 6.4 Tax calculation
 
-    function disputeEvidence(
-        uint256 evidenceId,
-        bytes calldata counterEvidence
-    ) external;
-
-    function finaliseSlashing(uint256 evidenceId) external;
-
-    function getSlashPercent(OffenseType offense) external pure returns (uint256);
-}
-```
-
-### 6.3 Slashing flow
-
-```
-Day 0: Evidence submitted
-  - submitEvidence() with 2/3+ validator signatures
-  - EvidenceSubmitted event emitted
-  - 72-hour dispute window begins
-
-Day 0-3: Dispute period
-  - Accused operator can submit counter-evidence
-  - If no dispute: evidence stands
-  - If dispute: further validator vote (another 48 hours)
-
-Day 3-5: Finalisation
-  - finaliseSlashing() called
-  - Stake slashed per OffenseType
-  - Held-back burned 100%
-  - OffenseConfirmed event emitted
-
-Day 5: Operator status updated
-  - If stake falls below minimum: automatic deregistration
-  - If stake remains above minimum: operator continues but with reputation hit
-```
-
-### 6.4 Validator quorum
-
-```solidity
-function submitEvidence(
-    address accused,
-    OffenseType offenseType,
-    bytes calldata evidenceData,
-    bytes[] calldata validatorSignatures
-) external {
-    require(validatorSignatures.length >= getQuorumSize(), "insufficient quorum");
-
-    // Verify each signature is from a registered validator
-    address[] memory validators = getCurrentValidators();
-    uint256 validSigCount = 0;
-    bytes32 evidenceHash = keccak256(abi.encode(accused, offenseType, evidenceData));
-
-    for (uint i = 0; i < validatorSignatures.length; i++) {
-        address signer = recoverSigner(evidenceHash, validatorSignatures[i]);
-        if (isValidator(signer, validators)) {
-            validSigCount++;
-        }
-    }
-
-    require(validSigCount >= getQuorumSize(), "insufficient valid signatures");
-
-    // Verify evidence format
-    require(verifyEvidenceFormat(offenseType, evidenceData), "invalid evidence format");
-
-    // Store evidence and open dispute window
-    uint256 evidenceId = nextEvidenceId++;
-    allEvidence[evidenceId] = Evidence({
-        accused: accused,
-        offenseType: offenseType,
-        evidenceData: evidenceData,
-        validatorSignatures: validatorSignatures,
-        submittedAt: block.timestamp
-    });
-
-    emit EvidenceSubmitted(msg.sender, accused, offenseType);
-}
-
-function getQuorumSize() public view returns (uint256) {
-    uint256 totalValidators = getCurrentValidators().length;
-    return (totalValidators * 2) / 3 + 1;  // 2/3 + 1
-}
-```
+For operator rewards:
+- Monthly EUR-equivalent valuation based on redemption value
+- Cumulative annual totals per operator
+- Annual tax statements generated automatically
 
 ---
 
-## 7. Governance contract
+## 7. Comparison with old smart contract design
 
-### 7.1 Purpose
-
-Enables on-chain proposal submission and voting. Used starting Phase 3 for non-critical parameters, and for all protocol governance from Phase 4 onwards.
-
-### 7.2 Interface
-
-```solidity
-interface IGovernance {
-    enum ProposalType {
-        ParameterChange,
-        GrantAllocation,
-        ContractUpgrade,
-        ProtocolChange
-    }
-
-    enum ProposalState {
-        Pending,
-        Active,
-        Succeeded,
-        Failed,
-        Executed,
-        Cancelled
-    }
-
-    struct Proposal {
-        uint256 id;
-        address proposer;
-        ProposalType proposalType;
-        bytes proposalData;
-        uint256 startTime;
-        uint256 endTime;
-        uint256 forVotes;
-        uint256 againstVotes;
-        uint256 abstainVotes;
-        ProposalState state;
-        bytes executionPayload;
-    }
-
-    event ProposalCreated(
-        uint256 indexed proposalId,
-        address indexed proposer,
-        ProposalType proposalType,
-        string description
-    );
-
-    event VoteCast(
-        address indexed voter,
-        uint256 indexed proposalId,
-        uint8 support,  // 0=against, 1=for, 2=abstain
-        uint256 weight
-    );
-
-    event ProposalExecuted(uint256 indexed proposalId);
-
-    function proposalCount() external view returns (uint256);
-    function proposals(uint256 proposalId) external view returns (Proposal memory);
-    function getQuorum(ProposalType proposalType) external view returns (uint256);
-    function getMajority(ProposalType proposalType) external pure returns (uint256);
-
-    function createProposal(
-        ProposalType proposalType,
-        bytes calldata proposalData,
-        bytes calldata executionPayload,
-        string calldata description
-    ) external returns (uint256);
-
-    function castVote(uint256 proposalId, uint8 support) external;
-
-    function queueForExecution(uint256 proposalId) external;
-    function executeProposal(uint256 proposalId) external;
-}
-```
-
-### 7.3 Voting parameters
-
-| Proposal Type | Quorum | Majority | Deliberation |
-|:-------------|:-------|:---------|:-------------|
-| ContractUpgrade | 20% of circulating | 75% yes | 30 days |
-| ProtocolChange | 15% of circulating | 66% yes | 14 days |
-| ParameterChange | 10% of circulating | 50%+1 yes | 7 days |
-| GrantAllocation | 5% of circulating | 50%+1 yes | 3 days |
-
-### 7.4 Timelock
-
-All successful proposals execute through a 2-day timelock for additional safety:
-
-```
-Day 0: Vote passes
-Day 0-2: Timelock period (can be cancelled by foundation multisig if emergency)
-Day 2: Execution callable
-```
+| Dimension | Old (Solidity) | New (Database) |
+|:----------|:---------------|:---------------|
+| Implementation language | Solidity | Go + SQL |
+| Deployment target | Arbitrum L2 | PostgreSQL cluster |
+| Gas cost per operation | ~$0.10-1.00 | Free |
+| Transaction finality | 1-5 seconds | Milliseconds |
+| Audit cost | 50,000 - 200,000 EUR per contract | Standard software testing |
+| Upgrade mechanism | Complex (migration contracts) | Standard software releases |
+| Emergency response | Timelock + multisig | Database operations |
+| Dev complexity | High (EVM, gas optimization, security) | Low (standard web dev) |
+| Throughput | ~10-50 TPS (Arbitrum) | 1,000+ TPS easily |
+| Storage cost | Expensive (~$1/KB on-chain) | Cheap (~$0.01/GB) |
+| Querying | Limited (event logs, state lookups) | Full SQL |
+| Regulatory status | Crypto asset under MiCA | Standard database records |
+| Integration | Web3 libraries required | Standard REST/GraphQL |
+| Failure modes | Consensus bugs, MEV, flash loans | Standard DB failure modes |
 
 ---
 
-## 8. Auxiliary contracts
+## 8. Implementation timeline
 
-### 8.1 TokenVesting
+### 8.1 Phase 1 implementation (Months 3-9)
 
-Used for team and advisor allocations. Standard OpenZeppelin VestingWallet with these parameters:
+**Month 3-4: Foundation**
+- Database schema implementation
+- Core application layer
+- Basic API endpoints
+- Unit and integration tests
 
-| Beneficiary Category | Total | Cliff | Duration |
-|:-------------------|:------|:------|:---------|
-| Founding team | 6M GC | 1 year | 4 years linear |
-| Core team | 2.5M GC | 1 year | 4 years linear |
-| Advisors | 1M GC | None | 2 years linear |
-| Early contributors | 500k GC | None | 2 years linear |
+**Month 5-6: Operations**
+- Earning flows (purchase, operator, community)
+- Balance queries and transaction history
+- Account management
+- Admin tools
 
-### 8.2 MultiSigWallet
+**Month 7-8: Redemption**
+- Redemption catalog
+- Fulfillment workflow
+- Item tracking
+- Customer support tools
 
-Standard Gnosis Safe 3-of-5 for foundation operations. Signers include:
+**Month 9: Launch**
+- Load testing
+- Security audit
+- Monitoring deployment
+- Soft launch with limited users
 
-- Founder (Sascha Daemgen)
-- Technical lead
-- Legal counsel
-- External advisor
-- External advisor
+### 8.2 Phase 2 (Months 9-15)
 
-### 8.3 Timelock
+- Operator rewards live
+- Holding period mechanics
+- Performance optimization
+- Compliance integrations (DSA, DAC7 prep)
 
-OpenZeppelin Timelock with:
+### 8.3 Phase 3 (Months 15-21)
 
-- Delay: 2 days for all operations
-- Admin: multisig wallet
-- Cancellable by guardian address
+- Marketplace development
+- Dispute resolution
+- DSA full compliance
+- DAC7 reporting infrastructure
+- Decision point on permissioned blockchain
+
+### 8.4 Phase 3+ if needed (Months 21+)
+
+- Permissioned blockchain evaluation
+- Pilot with subset of functionality
+- Migration plan if adopted
+- Parallel operation during transition
 
 ---
 
-## 9. Deployment checklist
+## 9. Operational runbook
 
-### 9.1 Pre-deployment
+### 9.1 Routine operations
 
-- [ ] All contracts compiled with Solidity 0.8.24
-- [ ] Unit tests with 95%+ coverage (Hardhat + Foundry)
-- [ ] Integration tests covering all user flows
-- [ ] Gas optimisation pass
-- [ ] Static analysis (Slither, Mythril) clean
-- [ ] First security audit complete
-- [ ] Second security audit complete
-- [ ] Bug bounty active on testnet
+**Daily:**
+- Monitoring dashboard review
+- Backup verification
+- Anomaly detection review
+- Support ticket triage
 
-### 9.2 Deployment script
+**Weekly:**
+- Performance metrics review
+- Security log review
+- Capacity planning check
+- Minor updates and patches
 
-```javascript
-// scripts/deploy.js (simplified)
-const hre = require("hardhat");
+**Monthly:**
+- Supply report generation
+- Transparency report data
+- External backup verification
+- Disaster recovery drill
+- Operator reward batch processing
 
-async function main() {
-    // 1. Deploy GoCoin
-    const GoCoin = await hre.ethers.deployContract("GoCoin", [
-        foundationTreasury,
-        teamVestingContract,
-        stakingContract,
-        rewardsContract
-    ]);
-    await GoCoin.waitForDeployment();
+**Quarterly:**
+- Security audit
+- Compliance review
+- Schema change planning
+- Major version updates
 
-    // 2. Deploy NodeStaking
-    const Staking = await hre.ethers.deployContract("NodeStaking", [
-        GoCoin.target
-    ]);
+### 9.2 Emergency procedures
 
-    // 3. Deploy NodeRewards
-    const Rewards = await hre.ethers.deployContract("NodeRewards", [
-        GoCoin.target,
-        Staking.target
-    ]);
+**Database unavailability:**
+1. Automated failover to standby
+2. Application degrades gracefully (read-only mode)
+3. Status page updated
+4. Users notified via in-app and email
+5. Root cause analysis within 24 hours
 
-    // 4. Deploy Subscription
-    const Subscription = await hre.ethers.deployContract("Subscription", [
-        EURC_ADDRESS,
-        GoCoin.target,
-        UNISWAP_V3_ROUTER
-    ]);
+**Suspected breach:**
+1. Immediate isolation of affected systems
+2. Investigation team assembled
+3. User data assessment
+4. Regulatory notification if required (72 hours GDPR)
+5. User notification if personal data affected
+6. Coordinated public disclosure
 
-    // 5. Deploy Slashing
-    const Slashing = await hre.ethers.deployContract("Slashing", [
-        Staking.target,
-        Rewards.target
-    ]);
+**Supply cap breach:**
+1. Immediate alert to operations team
+2. Investigation of cause
+3. Correction via compensating transactions if needed
+4. Root cause fix
+5. Public transparency about incident
 
-    // 6. Deploy Governance
-    const Governance = await hre.ethers.deployContract("Governance", [
-        GoCoin.target,
-        TIMELOCK_ADDRESS
-    ]);
+### 9.3 Reconciliation
 
-    // 7. Configure access control
-    await Staking.grantRole(SLASH_ROLE, Slashing.target);
-    await Rewards.grantRole(BURN_HELDBACK_ROLE, Slashing.target);
+Daily reconciliation ensures ledger integrity:
 
-    console.log("Deployment complete");
-    console.log({
-        GoCoin: GoCoin.target,
-        Staking: Staking.target,
-        Rewards: Rewards.target,
-        Subscription: Subscription.target,
-        Slashing: Slashing.target,
-        Governance: Governance.target
-    });
-}
+```sql
+-- Verify sum of balances matches cumulative issuance - cumulative burns
+SELECT
+    (SELECT SUM(amount) FROM balances) AS total_balances,
+    (SELECT SUM(amount) FROM transactions WHERE tx_type LIKE 'earn_%') AS total_issued,
+    (SELECT SUM(amount) FROM transactions WHERE tx_type IN ('redeem', 'burn')) AS total_burned,
+    (SELECT SUM(amount) FROM transactions WHERE tx_type LIKE 'earn_%') -
+    (SELECT SUM(amount) FROM transactions WHERE tx_type IN ('redeem', 'burn')) AS expected_balance;
 ```
 
-### 9.3 Post-deployment
-
-- [ ] Verify all contracts on Arbiscan
-- [ ] Transfer ownership to Timelock/Multisig
-- [ ] Initialize emission schedule in Rewards
-- [ ] Seed initial Uniswap V3 liquidity pool
-- [ ] Publish deployment addresses to documentation
-- [ ] Announce deployment to community
-- [ ] Monitor contracts for first 48 hours
+Any discrepancy triggers immediate investigation.
 
 ---
 
-## 10. Gas cost summary
+## 10. Why this design is better
 
-Estimated costs at typical Arbitrum gas prices (0.1 gwei, $2000 ETH):
+### 10.1 For users
 
-| Operation | Gas | Cost (USD) |
-|:----------|:----|:-----------|
-| Deploy GoCoin | ~1,500,000 | $0.30 |
-| Deploy NodeStaking | ~2,000,000 | $0.40 |
-| Deploy NodeRewards | ~2,500,000 | $0.50 |
-| Deploy Subscription | ~2,500,000 | $0.50 |
-| Deploy Slashing | ~2,500,000 | $0.50 |
-| Deploy Governance | ~3,000,000 | $0.60 |
-| **Total deployment** | ~14,000,000 | **~$2.80** |
-| | | |
-| registerNode() | ~150,000 | $0.003 |
-| requestExit() | ~50,000 | $0.001 |
-| withdrawStake() | ~60,000 | $0.001 |
-| subscribe() | ~250,000 | $0.005 |
-| claimHeldBack() | ~80,000 | $0.002 |
-| submitEvidence() | ~400,000 | $0.008 |
-| distributeRewards (100 nodes) | ~3,000,000 | $0.06 |
-| castVote() | ~70,000 | $0.001 |
+- No crypto wallet complexity
+- No seed phrases to lose
+- No gas fees
+- Fast, familiar experience
+- Consumer protection applies normally
+- Can dispute transactions through normal channels
 
-All costs are negligible relative to transaction value and do not affect unit economics.
+### 10.2 For the Foundation
 
----
+- 1,000,000+ EUR in savings vs. smart contract deployment
+- Standard operational tooling
+- Normal hiring pool (not limited to Solidity experts)
+- Easier regulatory compliance
+- Lower ongoing costs
+- Normal insurance availability
 
-## 11. Testing and verification
+### 10.3 For the ecosystem
 
-### 11.1 Test coverage
+- Integrates easily with web apps and mobile
+- Standard authentication patterns
+- Familiar business logic
+- Easy to extend with new features
+- Lower barrier for third-party integration
+- Scales naturally with user growth
 
-All contracts must achieve 95%+ test coverage before deployment:
+### 10.4 For regulators
 
-```
-Unit tests (Hardhat):
-  - Each function in isolation
-  - Edge cases (overflow, zero, max values)
-  - Access control checks
-  - Event emissions
-
-Integration tests (Foundry):
-  - Full subscription flow (EURC -> swap -> burn -> Pro)
-  - Full registration flow (stake -> active -> exit -> withdraw)
-  - Full slashing flow (evidence -> dispute -> finalise)
-  - Cross-contract interactions
-
-Fuzz tests (Foundry):
-  - Invariants across all state changes
-  - No negative balances
-  - totalSupply = sum(balances)
-  - totalBurned = totalSupply_before - totalSupply_current
-```
-
-### 11.2 Formal verification (optional)
-
-For highest-risk contract paths:
-
-| Contract | Method | Scope |
-|:---------|:-------|:------|
-| GoCoin | Symbolic execution | Burn accounting invariants |
-| Subscription | Model checking | State transitions |
-| Slashing | Proof assistant | Evidence validation logic |
-
-### 11.3 Continuous monitoring
-
-Post-deployment monitoring:
-
-- Forta agents on all contracts
-- Defender sentinels for critical functions
-- Dashboard tracking metrics (TVL, TVB = Total Value Burned)
-- Alerting on anomalies (unusual burn volumes, large withdrawals, rapid slashing)
+- Well-understood technology
+- Clear legal classification
+- Standard compliance patterns
+- Established precedent (Payback, Miles, Steam)
+- Normal audit procedures
+- Familiar dispute resolution
 
 ---
 
-## 12. Related components
+## 11. Related components
 
 | Component | Role | Documentation |
 |:----------|:-----|:-------------|
-| [GoNode Architecture](ARCHITECTURE_AND_SECURITY.md) | Smart contract threat model | This repo |
-| [GoNode Tokenomics](TOKENOMICS.md) | Economic parameters | This repo |
-| [GoNode Wire Protocol](WIRE_PROTOCOL.md) | Off-chain counterpart | This repo |
-| [GoNode Roadmap](ROADMAP.md) | Deployment timing | This repo |
+| [Tokenomics](TOKENOMICS.md) | Economic design | This repo |
+| [Architecture and Security](ARCHITECTURE_AND_SECURITY.md) | Network architecture | This repo |
+| [Wire Protocol](WIRE_PROTOCOL.md) | Communication protocol | This repo |
+| [Legal Compliance](LEGAL_COMPLIANCE.md) | Regulatory framework | This repo |
+| [Business Model](BUSINESS_MODEL.md) | Revenue and economics | This repo |
+| GoUNITY | Identity and authentication | Separate repo |
+| GoKey | Hardware identity | SimpleGo repo |
 
 ---
 
-*GoNode Smart Contracts v1 - April 2026*
+*GoNode Ledger Architecture v2 - April 2026 (replaces v1 Smart Contracts design)*
 *IT and More Systems, Recklinghausen, Germany*

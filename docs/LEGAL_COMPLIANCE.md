@@ -9,806 +9,744 @@
 
 ## Overview
 
-This document specifies the legal and regulatory framework under which GoNode operates. It covers the primary legal basis for the GoCoin loyalty system (PSD2 limited network exemption, German ZAG, BGB), the peer-to-peer marketplace requirements under the EU Digital Services Act (DSA), GDPR compliance, German tax law, German criminal law considerations, and related compliance obligations.
+This document specifies the legal and regulatory framework under which GoNode operates. Following the redesign of GoCoin from a crypto token to a closed-loop loyalty system, the legal framework has changed substantially. This document covers the applicable frameworks: Payment Services Directive (PSD2) and German ZAG, E-Money Directive, GDPR, Digital Services Act (DSA), German commercial and civil law, tax law, and consumer protection.
 
-GoNode is designed from day one to comply with all applicable regulations. The architecture choices, corporate structure, and loyalty system design all incorporate compliance considerations. This document explains each compliance area, how GoNode addresses it, and the specific evidence of compliance.
-
-**Important redesign notice:** Following internal review in April 2026, the GoCoin design was fundamentally changed from a crypto-asset model (MiCA Art. 3(1)(9) utility token) to a closed-loop loyalty rewards system (PSD2 Art. 3(k) / ZAG § 2 limited network exemption). This document reflects the redesigned model. The earlier crypto-token approach has been superseded.
-
-**Disclaimer:** This document is not legal advice. It summarises our good-faith understanding of applicable regulations and the compliance approach. A formal Rechtsgutachten (legal opinion) from a qualified German law firm will be commissioned before public launch of the GoCoin loyalty system.
+**Disclaimer:** This document is not legal advice. It summarises our good-faith understanding of applicable regulations and our compliance approach. A formal legal opinion (Rechtsgutachten) from a qualified German law firm specialising in loyalty programs and digital services will be commissioned before the marketplace launches.
 
 | Jurisdiction | Primary Applicability |
 |:-------------|:----------------------|
-| Germany | Primary operational base, loyalty program issuance |
-| European Union | PSD2, DSA, GDPR, E-Money Directive, Consumer Rights |
-| Switzerland | Foundation jurisdiction (if Swiss Stiftung chosen) |
+| Germany | Operating entity jurisdiction (IT and More Systems GmbH) |
+| European Union | GDPR, DSA, PSD2, Consumer Rights Directive |
+| Switzerland | Optional Foundation jurisdiction for international operations (future) |
 
 ---
 
 ## 1. Entity structure
 
-### 1.1 Two-entity design (unchanged from earlier version)
+### 1.1 Operating entity
 
-GoNode operates through two legally separate entities with distinct roles:
+The primary operating entity is **IT and More Systems GmbH** in Recklinghausen, Germany. This entity:
 
-```
-+-------------------------------------------------------------+
-|  GoNode Foundation (Swiss Stiftung or German Stiftung)      |
-|                                                             |
-|  Roles:                                                     |
-|  - Protocol operation and governance                        |
-|  - GoCoin loyalty program issuance                          |
-|  - Treasury management                                      |
-|  - Grant funding administration                             |
-|  - International relationships                              |
-|  - Strategic direction                                      |
-+-------------------------------------------------------------+
-                         |
-                  contractual relationship
-                         |
-                         v
-+-------------------------------------------------------------+
-|  IT and More Systems GmbH                                   |
-|  Jurisdiction: Germany (Recklinghausen)                     |
-|  Legal form: GmbH (limited liability company)               |
-|                                                             |
-|  Roles:                                                     |
-|  - Software development and engineering                     |
-|  - Publishing (GitHub repositories)                         |
-|  - BaFin correspondence and German compliance              |
-|  - Employment of German-based developers                    |
-|  - Contract services to the Foundation                      |
-|  - GoCoin loyalty program operational administration        |
-+-------------------------------------------------------------+
-```
+- Issues GoCoin loyalty points to users and operators
+- Operates the peer-to-peer marketplace
+- Provides customer support and manages disputes
+- Handles tax reporting obligations
+- Maintains the GoCoin ledger (database or permissioned blockchain)
+- Develops the open-source software
+- Contracts with enterprise customers
 
-### 1.2 Foundation domicile (Swiss vs German)
+The two-entity structure from the previous crypto-token design (Swiss Foundation + German GmbH) is **no longer required** because:
 
-The earlier plan assumed Swiss Stiftung for protocol operations. With the redesign to a loyalty system, the case for Swiss domicile is weaker and a German Stiftung or gGmbH may be more appropriate:
+- No token issuance triggering MiCA Title II obligations
+- No Foundation treasury holding volatile assets
+- No need for Swiss crypto-friendly banking
+- Lower operational complexity and cost
 
-| Factor | Swiss Stiftung | German Stiftung |
-|:-------|:---------------|:----------------|
-| Setup cost | 50-80k CHF | 15-25k EUR |
-| Minimum capital | 50k CHF | 10-50k EUR |
-| Regulatory clarity | Good (FINMA) | Excellent (well-established) |
-| Tax treatment | Favourable | Good (subject to Gemeinnützigkeit status) |
-| Grant eligibility (EU) | Limited | Full |
-| Operational synergy with GmbH | Lower | Higher |
-| Relevance post-redesign | Reduced | Increased |
+A Swiss Foundation may still be established later for international expansion, but this is optional and not on the critical path.
 
-**Recommendation:** Evaluate German Stiftung option given that MiCA and crypto-specific considerations no longer drive the choice. Final decision deferred to Phase 1 after legal opinion.
+### 1.2 Corporate responsibility
 
-### 1.3 Operational separation of duties
+IT and More Systems GmbH is responsible for:
 
-Critical operations require different entities or multiple parties:
+| Area | Responsibility |
+|:-----|:--------------|
+| Loyalty program administration | Primary issuer |
+| Marketplace operations | Platform operator |
+| Data protection (GDPR) | Data Controller |
+| DSA compliance | Platform operator |
+| Tax reporting (DAC7) | Platform operator |
+| Consumer protection | Seller of ecosystem goods |
+| Software publication | Publisher under AGPL-3.0 |
 
-| Operation | Performed by | Authorisation required |
-|:----------|:-------------|:-----------------------|
-| GoCoin issuance (purchase rewards) | GmbH automated system | Standard business operation |
-| GoCoin issuance (operator rewards) | GmbH automated system | Monthly reconciliation |
-| GoCoin issuance (community rewards) | Foundation discretion | Foundation board approval |
-| Burn/reclamation operations | Foundation | Board approval, audit trail |
-| Marketplace fee collection | GmbH | Standard business operation |
-| Code commits | GmbH developers | PR review + 1 approval |
-| Reserve coin movement | Foundation | Multi-party approval |
+### 1.3 Governance
+
+Governance is standard corporate governance under German GmbH law (GmbHG), with additional transparency commitments:
+
+- Monthly transparency reports on coin supply and transactions
+- Annual audited financial reports
+- Quarterly community reports on development progress
+- Public disclosure of material Terms of Service changes with 6 months notice
 
 ---
 
-## 2. GoCoin legal classification
+## 2. Loyalty program classification
 
-### 2.1 Primary classification: Limited network exemption
+### 2.1 The limited network exception
 
-GoCoin is designed as a **closed-loop loyalty point** under the limited network exemption. This is the same legal basis that covers Payback, Miles & More, Deutsche Bahn BahnBonus, Steam Wallet, and most German/EU loyalty programs.
+GoCoin is designed to qualify for the **limited network exception** under European payment services law. This exception is the legal basis for virtually every loyalty program in the EU.
 
-**Primary legal basis:**
+**Payment Services Directive 2 (Directive 2015/2366), Article 3(k):**
 
-- **Article 3(k) Payment Services Directive 2 (Directive (EU) 2015/2366)** - exemption for "payment transactions based on payment instruments that can be used... to acquire a very limited range of goods or services, or... within the premises of the issuer or under a commercial agreement with the issuer, either within a limited network of service providers"
+PSD2 excludes from its scope:
 
-- **§ 2 Absatz 1 Nummer 10 Zahlungsdiensteaufsichtsgesetz (ZAG)** - German implementation. Exempts instruments used only within a limited network of service providers or for a limited range of goods/services.
+> "services based on specific payment instruments that can be used only in a limited way, that meet one of the following conditions:
+>
+> (i) instruments allowing the holder to acquire goods or services only in the premises of the issuer or within a limited network of service providers under direct commercial agreement with a professional issuer;
+>
+> (ii) instruments which can be used only to acquire a very limited range of goods or services;
+>
+> (iii) instruments valid only in a single Member State provided at the request of an undertaking or a public sector entity and regulated by a national or regional public authority for specific social or tax purposes to acquire specific goods or services from suppliers having a commercial agreement with the issuer."
 
-- **Recital 14 Electronic Money Directive (2009/110/EC)** - closed-loop schemes where electronic money is issued for a specific purpose within a limited network are generally outside e-money regulation scope.
+GoCoin qualifies under Art. 3(k)(i): users can only redeem coins within the SimpleGo ecosystem, from a single issuer (IT and More Systems GmbH).
 
-### 2.2 Why GoCoin qualifies for the exemption
+**German Zahlungsdiensteaufsichtsgesetz (ZAG), § 2 Abs. 1 Nr. 10:**
 
-The limited network exemption applies because GoCoin satisfies these criteria:
+The German implementation of PSD2 Art. 3(k) excludes services based on instruments usable only in a limited network, for a limited range of goods/services, or under specific tax/social purposes agreements.
 
-| Criterion | GoCoin status | Evidence |
-|:----------|:-------------|:---------|
-| Issued by single entity | Yes | Only IT and More Systems GmbH issues GoCoin |
-| Limited range of goods/services | Yes | Only SimpleGo ecosystem goods |
-| Not generally accepted as payment | Yes | Cannot be used outside the ecosystem |
-| No redemption in money | Yes | Foundation never buys coins back for EUR |
-| No external trading venues | Yes | No DEX, no CEX, no public market |
-| Commercial agreement with issuer | Yes | Terms of Service defines acceptance |
+### 2.2 BaFin notification requirement
 
-### 2.3 ZAG thresholds
+**Important procedural note:** Even when the exemption applies, § 2 Abs. 2 ZAG requires **notification to BaFin** if annual transaction volume exceeds **1 million EUR** in the preceding 12 months.
 
-German law (§ 2 Abs. 1 Nr. 10 ZAG) places certain reporting obligations on limited network instruments exceeding thresholds:
+For GoCoin:
 
-| Threshold | Obligation |
-|:----------|:-----------|
-| Under 1 million EUR annual transaction volume | No specific reporting |
-| 1-5 million EUR annual volume | Notification to BaFin recommended |
-| Over 5 million EUR annual volume | Formal notification to BaFin required |
-| Over 2 million EUR with significant general use | May lose exemption, require regulation |
+- **Below 1M EUR transaction value per year:** No BaFin notification required
+- **Above 1M EUR:** Notification to BaFin (informational, not an authorisation)
+- **Above 1M EUR:** Annual report to BaFin demonstrating continued qualification for exemption
 
-**GoNode approach:** File voluntary notification to BaFin once transaction volume approaches 1 million EUR, proactively establish compliance posture with the regulator before it becomes mandatory.
+The notification is a simple administrative filing - it is not an authorisation process. BaFin does not approve or reject, but can request additional information if concerns arise.
 
-### 2.4 What GoCoin is NOT under various regimes
+### 2.3 E-Money Directive non-applicability
 
-GoCoin's classification under various regulatory regimes:
+**E-Money Directive (2009/110/EC)** defines electronic money in Art. 2(2):
 
-| Regulation | Classification | Why |
-|:-----------|:--------------|:----|
-| MiCA (EU 2023/1114) | Not a crypto-asset | No DLT tradability, no public markets, closed-loop |
-| E-Money Directive (2009/110/EC) | Not e-money | Not redeemable in cash, limited network exemption applies |
-| PSD2 (2015/2366) | Not a payment service | Art. 3(k) limited network exemption |
-| MiFID II | Not a financial instrument | No investment character, no profit participation |
-| KAGB | Not a fund unit | No pooled investment |
-| ZAG | Not a payment instrument | § 2 Abs. 1 Nr. 10 exemption |
-| KWG | Not banking/financial service | No lending, deposit-taking, or trading |
-| WpHG | Not a security | No securities characteristics |
-| Prospectus Regulation | No prospectus needed | Not offered as investment |
+> "electronically, including magnetically, stored monetary value as represented by a claim on the issuer which is issued on receipt of funds for the purpose of making payment transactions, and which is accepted by a natural or legal person other than the electronic money issuer"
 
-### 2.5 Regulatory precedent
+GoCoin is **not** e-money because:
 
-German and EU regulators have consistently treated loyalty points as outside the scope of financial regulation:
+- Not issued on receipt of funds from the holder (earned as loyalty, not purchased)
+- Not accepted by persons other than the issuer (redeemable only within SimpleGo ecosystem)
+- Does not represent a monetary claim on the issuer (fixed redemption for goods, not money)
 
-**BaFin guidance on customer loyalty programs:** BaFin has historically confirmed that loyalty programs operating within a limited network (single issuer, limited acceptance) are not subject to ZAG, ZAG licensing, or prudential supervision. Examples confirmed in informal guidance:
+**Recital 14 E-Money Directive** explicitly excludes:
 
-- Payback (30+ million users)
-- Miles & More (36+ million members)
-- Deutsche Bahn BahnBonus
-- Deutsche Telekom Magenta Moments
-- Various supermarket and retail loyalty programs
+> "monetary value stored on specific pre-paid instruments, designed to address precise needs that can be used only in a limited way, either because it allows the specific instrument holder to purchase goods or services only in the premises of the electronic money issuer or within a limited network of service providers under direct commercial agreement with a professional issuer"
 
-**EU regulatory approach:** The European Banking Authority (EBA) and European Commission have published guidance confirming that limited network instruments remain outside PSD2 scope when they satisfy the Art. 3(k) criteria.
+This confirms the closed-loop loyalty exemption.
 
-**Case law:** No German or EU court has reclassified a limited-network loyalty program as e-money or payment service when properly structured. The legal territory is well-established.
+### 2.4 MiCA non-applicability
 
----
+**MiCA Regulation (EU 2023/1114)** applies to crypto-assets. Art. 3(1)(5) defines a crypto-asset as:
 
-## 3. GoCoin issuance legal basis
+> "a digital representation of a value or of a right that is able to be transferred and stored electronically using distributed ledger technology or similar technology"
 
-### 3.1 Purchase rewards as Rabatt/Bonus
+Whether GoCoin falls within this depends on technology choice:
 
-When users earn GoCoin as a bonus on EUR purchases, the legal characterisation is:
+**If internal database (recommended for Phase 1):**
+- Not distributed ledger technology
+- Not a crypto-asset under MiCA
+- MiCA does not apply at all
 
-**Rabattgewährung (rebate):** The GoCoin bonus is a form of rebate on the purchase, reducing the effective price paid by the customer. Rebates are standard commercial practice and do not trigger financial regulation.
+**If permissioned blockchain (possible Phase 3+):**
+- Uses DLT
+- But MiCA Art. 2(4) excludes limited-use instruments
+- Analogous to PSD2 Art. 3(k), limited network scope excludes from MiCA scope
+- The exemption is less explicit than in PSD2, so legal opinion required
 
-**Legal basis:**
+**Conservative approach:** Use internal database for Phase 1 to avoid any MiCA ambiguity. Revisit if permissioned blockchain becomes strategically important.
 
-- § 312a BGB (general consumer protection for distance contracts)
-- § 1 PreisangabenVerordnung (price transparency requirements)
-- § 7 UWG (unfair competition - rebates must be genuine, not misleading)
+### 2.5 Comparison with existing German loyalty programs
 
-**Tax basis:**
+| Program | Provider | Legal Basis | Transaction Volume (annual) |
+|:--------|:---------|:------------|:----------------------------|
+| Payback | Loyalty Partner Solutions GmbH | § 2 ZAG exemption | 500M+ EUR |
+| Lufthansa Miles & More | Miles & More GmbH | § 2 ZAG exemption | Billions EUR |
+| BahnBonus | DB Vertrieb GmbH | § 2 ZAG exemption | 100M+ EUR |
+| Deutsche Telekom Magenta Moments | Deutsche Telekom AG | § 2 ZAG exemption | 50M+ EUR |
+| Amazon Coins | Amazon Services Europe | § 2 ZAG exemption | Confidential |
 
-- BMF-Schreiben on loyalty programs (10 December 2015) - rebates are generally not taxable income for the consumer
-- § 3 Nr. 11 EStG considerations for employer-related bonuses (not applicable here)
-
-**Commercial basis:**
-
-- GTCs clearly disclose the bonus rate before purchase
-- Bonus is automatically awarded, no separate contract needed
-- User can refuse the bonus (opt out of loyalty program)
-
-### 3.2 Operator rewards as service compensation
-
-Node operator rewards have a different legal character:
-
-**Service compensation:** Operators provide computing services to the network. The GoCoin reward is payment for that service. The legal character is Dienstleistungsvergütung (service payment).
-
-**Legal basis:**
-
-- § 611 BGB (service contract) or § 631 BGB (work contract) depending on structure
-- Terms of Service define the contractual relationship
-- Automatic calculation based on measurable service parameters (uptime, audit response)
-
-**Tax consequences:**
-
-- Taxable income for operators (see section 8)
-- Foundation provides annual statements for tax reporting
-- DAC7 reporting may apply above thresholds
-
-### 3.3 Community rewards as discretionary gifts
-
-Community contribution rewards are discretionary grants:
-
-**Legal character:** Schenkung unter Auflage (gift subject to conditions) or zweckgebundene Zuwendung (purpose-tied grant).
-
-**Tax consequences:**
-
-- Generally taxable for recipient under § 22 Nr. 3 EStG
-- Small amounts (under 256 EUR/year) may fall under Freibetrag
-- Foundation issues statements if over threshold
+None of these programs hold e-money licenses or payment service authorisations. They all operate under the same exemption framework GoCoin will use.
 
 ---
 
-## 4. Peer-to-peer marketplace compliance (DSA)
+## 3. Gaming precedents
+
+The peer-to-peer marketplace aspect of GoCoin is closest in structure to gaming industry closed economies.
+
+### 3.1 Steam Marketplace (Valve)
+
+Valve operates Steam Marketplace in the EU through Valve S.a.r.l. (Luxembourg):
+
+- Steam Wallet credits classified under Luxembourg payment services exemption (equivalent to PSD2 Art. 3(k))
+- Peer-to-peer trading of digital items allowed
+- Items cannot be withdrawn as money (except through informal third-party channels Valve does not endorse)
+- 7-day trade lock on items (similar to our 30-day operator holding period)
+- Marketplace fee approximately 15% (we charge 2-5%)
+- Annual EU transaction volume estimated in billions of EUR
+
+Valve operates without e-money license or payment service authorisation based on the closed-loop structure.
+
+### 3.2 World of Warcraft Gold (Blizzard)
+
+Blizzard Entertainment operates WoW Gold as an in-game currency in the EU. WoW Token (peer-to-peer tradeable for time credit) operates under Irish payment services exemption.
+
+Key lesson: Even peer-to-peer tradeable items qualify as closed-loop loyalty when they cannot be redeemed for money directly.
+
+### 3.3 Fortnite V-Bucks (Epic Games)
+
+Epic Games operates V-Bucks in the EU. Recent US FTC settlement (2022) over dark patterns in purchasing does not affect EU classification.
+
+Key lesson: Clear, transparent redemption rules and user-friendly terms are critical for maintaining loyalty program status. GoCoin's fixed redemption rates address this.
+
+### 3.4 EVE Online (CCP Games)
+
+CCP Games operates EVE Online's complex closed economy (ISK, PLEX) in the EU from Iceland:
+
+- 20+ years of operation without regulatory intervention
+- Published monthly economic reports (transparency)
+- Peer-to-peer trading and complex player markets
+- PLEX convertible between real-money-purchased and in-game-earned states
+- Regulators treat it as a closed-loop loyalty/gaming system
+
+Key lesson: Long operational history demonstrates that closed-loop systems with active peer-to-peer markets can operate indefinitely under existing regulatory frameworks.
+
+### 3.5 Roblox Robux
+
+Roblox Corporation operates Robux in the EU through Roblox Netherlands B.V.
+
+Key legal feature: DevEx program allows developers to convert earned Robux to USD, but through specific commercial agreements and KYC verification - not a general marketplace function. This is a structure GoCoin explicitly avoids to maintain simpler classification.
+
+---
+
+## 4. Digital Services Act (DSA)
 
 ### 4.1 Regulatory background
 
-The GoNode marketplace enables users to trade GoCoin and ecosystem items between each other. This makes GoNode an "online marketplace" for DSA purposes, triggering specific obligations.
-
-**Regulation:** Digital Services Act (Regulation (EU) 2022/2065).
-
+**Regulation:** Regulation (EU) 2022/2065 (Digital Services Act).
 **Applicability:** Fully applicable since 17 February 2024.
+**Relevance to GoNode:** The peer-to-peer marketplace qualifies as an intermediary service.
 
-**GoNode's classification under DSA:**
+### 4.2 Intermediary categorisation
 
-- **Not a mere conduit** - we process transactions
-- **Not pure caching** - we store user listings
-- **Hosting service** under Art. 6 - users post content (listings), we host it
-- **Online platform** under Art. 3(i) - we enable user-to-user transactions
-- **Online marketplace** under Art. 6(c) - we facilitate consumer-to-consumer trades
-- **NOT a VLOP** - below 45M EU users threshold
+| Activity | DSA Classification | Obligations |
+|:---------|:------------------|:------------|
+| Hosting user-generated marketplace listings | Art. 6 (hosting service) | Notice-and-action, clear terms |
+| Connecting buyers and sellers | Art. 3(i) (online platform) | Transparency, illegal content reporting |
+| Not reaching 45M EU users | Not a VLOP | Standard obligations only |
 
-### 4.2 Key DSA obligations for the marketplace
+### 4.3 Key DSA obligations
 
-**Article 14 (terms and conditions):**
-
-- Clear, easily accessible terms of service
-- Language requirements (German for Germany, local languages where relevant)
-- Specific information about content moderation policies
-- Annual reports on content moderation (when user base grows)
-
-**Article 16 (notice-and-action mechanism):**
-
-Users can report illegal content/listings through:
-
-- In-app reporting button on every listing
-- Web form at marketplace.gonode.dev/report
-- Email: notice@gonode.dev
-
-Process:
-
-```
-Notice received
-  |
-  v
-Acknowledgment (within 24 hours)
-  |
-  v
-Review by moderation team (within 7 days)
-  |
-  +-> Valid: take action (remove listing, notify user)
-  |
-  +-> Invalid: inform reporter, explain reasoning
-  |
-  +-> Requires more info: request clarification
-```
-
-**Article 20 (internal complaint-handling system):**
-
-Users affected by moderation decisions can appeal:
-
-- Online system for submitting appeals
-- 6-month window after moderation decision
-- Free of charge for users
-- Final decision within 14 days
-
-**Article 23 (measures against misuse):**
-
-- Warnings and temporary suspensions for abusive behaviour
-- Permanent bans for repeated violations
-- Specific measures for counterfeit goods (not applicable to loyalty points)
-
-**Article 27 (recommender system transparency):**
-
-If we use algorithmic ranking in the marketplace, main parameters must be disclosed in the ToS.
-
-**Article 30 (traceability of traders):**
-
-**Critical decision:** Are users on our marketplace "traders" (commercial users) or "consumers"?
-
-- **Consumer-to-consumer (C2C):** Users trading their own earned coins/items. Art. 30 does not apply.
-- **Business-to-consumer (B2C):** If some users trade commercially, traceability obligations apply.
-
-**GoNode design:** We explicitly design the marketplace for C2C trading. Commercial use is discouraged through Terms of Service. This keeps us outside Art. 30 obligations, at least initially.
-
-**Article 31 (compliance by design):**
-
-If B2C trading becomes relevant, we implement:
-
-- Trader identification verification
-- Self-declaration interface
-- Monitoring for commercial patterns
-
-**Article 32 (obligation to inform consumers):**
-
-When illegal listings are found, affected users who purchased/bid are notified.
-
-### 4.3 Single point of contact (Art. 11 DSA)
-
-GoNode designates a single point of contact for EU authorities:
-
+**Art. 11 (single point of contact for authorities):**
 - Email: authorities@gonode.dev
-- Phone: [to be published with Foundation details]
-- Address: IT and More Systems GmbH, Recklinghausen, Germany
-- Languages: English, German
+- Response within 24 hours for authority requests
+- Documented escalation process
 
-### 4.4 Legal representative (Art. 12 DSA)
+**Art. 12 (single point of contact for users):**
+- Marketplace support email and web form
+- Response within 72 hours for user reports
+- Accessible dispute resolution mechanism
 
-IT and More Systems GmbH serves as legal representative in the EU for Foundation activities. Already established.
+**Art. 14 (terms and conditions):**
+- Marketplace Terms clearly posted
+- Available in German and English
+- Written in plain language
+- Changes announced 14 days in advance
+
+**Art. 16 (notice-and-action mechanism):**
+- Web form and email for reporting illegal content
+- Structured information collection
+- Acknowledgment within 48 hours
+- Decision within 7 days with reasoning
+
+**Art. 17 (statement of reasons):**
+- When removing content or restricting accounts
+- Legal basis cited
+- Internal appeal mechanism
+
+**Art. 20-22 (internal complaints, out-of-court dispute resolution):**
+- Internal complaint handling process (free to users)
+- Decision within 6 months maximum
+- Information about certified external dispute resolution bodies
+
+**Art. 24 (transparency reporting):**
+- Annual transparency report
+- Statistics on content moderation and user suspensions
+
+### 4.4 Marketplace-specific obligations
+
+**Art. 30 (traceability of traders):**
+
+Applies if the marketplace hosts commercial sellers (not just consumers):
+- Most users are consumers trading personal items - Art. 30 does not apply
+- If commercial users participate, traceability requirements apply (collect and verify trader identity)
+
+**Art. 31 (compliance by design):**
+
+- Marketplace design makes it easy to comply with legal obligations
+- Clear categories for listings
+- Automatic checks for prohibited items
+
+**Art. 32 (right to information):**
+
+- If illegal offers are identified, users who purchased must be informed
+- Contact information for enforcement authorities when relevant
+
+### 4.5 Content moderation principles
+
+The marketplace will:
+
+- Prohibit listings that violate law
+- Prohibit listings that violate Terms of Service (e.g., attempts to sell coins for money)
+- Automatically flag suspicious patterns
+- Manually review reported listings
+- Maintain audit log of moderation decisions
 
 ---
 
 ## 5. GDPR compliance
 
-### 5.1 Personal data categories
+### 5.1 Legal basis for processing
 
-The loyalty system processes:
+GoCoin operations process personal data on these legal bases:
 
-| Data category | Purpose | Legal basis |
-|:--------------|:--------|:------------|
-| Account data (email, username) | Authentication | Contract (Art. 6(1)(b)) |
-| Purchase history | Reward calculation | Contract (Art. 6(1)(b)) |
-| GoCoin balance | Account management | Contract (Art. 6(1)(b)) |
-| Marketplace listings | Platform operation | Contract (Art. 6(1)(b)) |
-| Marketplace transactions | Trade execution | Contract (Art. 6(1)(b)) |
-| Node operator data | Reward calculation | Contract (Art. 6(1)(b)) |
-| Audit logs | Security, fraud prevention | Legitimate interest (Art. 6(1)(f)) |
-| Tax data | DAC7 reporting | Legal obligation (Art. 6(1)(c)) |
+| Data type | Legal basis | GDPR article |
+|:----------|:------------|:-------------|
+| Account information | Contract performance | Art. 6(1)(b) |
+| Transaction history | Contract + legal obligation | Art. 6(1)(b), (c) |
+| Marketplace listings | Contract performance | Art. 6(1)(b) |
+| Dispute records | Legitimate interest | Art. 6(1)(f) |
+| Anti-fraud monitoring | Legitimate interest | Art. 6(1)(f) |
+| Tax reporting data | Legal obligation | Art. 6(1)(c) |
+| Marketing (optional) | Consent | Art. 6(1)(a) |
 
-### 5.2 Data subject rights
+### 5.2 Data minimisation
 
-Standard GDPR rights fully implemented:
+The Foundation collects only necessary data:
+
+- Account creation: email (verified), pseudonym (optional)
+- Marketplace participation: account link only
+- Transaction records: sender, recipient, amount, timestamp, type
+- Tax reporting: required DAC7 fields only
+
+Not collected by default:
+- Real name (unless required for DAC7 above thresholds)
+- Physical address (unless hardware shipping requested)
+- Phone number (optional)
+- Government ID (unless required for dispute escalation or DAC7)
+
+### 5.3 User rights
 
 | Right | Article | Implementation |
-|:------|:--------|:--------------|
-| Information | 13, 14 | Privacy notice at signup |
-| Access | 15 | Account settings export |
-| Rectification | 16 | Profile editing |
-| Erasure | 17 | Account deletion (with retention exceptions) |
-| Restriction | 18 | Flag account |
-| Portability | 20 | JSON export of data |
-| Objection | 21 | Opt-out of optional processing |
+|:------|:--------|:---------------|
+| Access | Art. 15 | Dashboard + full data export in JSON |
+| Rectification | Art. 16 | Self-service for most fields |
+| Erasure | Art. 17 | Account deletion with 30-day grace period |
+| Restriction | Art. 18 | Account suspension mechanism |
+| Portability | Art. 20 | Machine-readable export |
+| Objection | Art. 21 | Marketing opt-out |
+| Automated decision-making | Art. 22 | No fully automated significant decisions |
 
-### 5.3 Right to erasure considerations
+### 5.4 Data retention
 
-The loyalty system design supports GDPR Art. 17 (right to be forgotten):
+| Data category | Retention period | Reason |
+|:-------------|:-----------------|:-------|
+| Active account data | Duration of account + 30 days | User convenience |
+| Transaction records | 10 years | German commercial law (HGB § 257) |
+| Tax reporting data | 10 years | § 147 AO |
+| Marketplace listings | 2 years after completion | Dispute resolution |
+| Moderation actions | 5 years | DSA audit requirements |
+| Anonymised analytics | Indefinite | Service improvement |
 
-**Database-based ledger:**
+### 5.5 Data protection impact assessment (DPIA)
 
-- Account and balance data deletable on request
-- Retention exceptions for legal obligations (tax records for 10 years)
-- Transaction history can be pseudonymised
+Under Art. 35 GDPR, a DPIA is required for high-risk processing:
 
-**Permissioned blockchain (future):**
+**DPIA required for:**
+- Peer-to-peer marketplace (large-scale processing of user activities)
+- DAC7 reporting (transfer to tax authorities)
+- Permissioned blockchain (if implemented in Phase 3+)
 
-- Immutable by design - direct deletion impossible
-- Pseudonymisation at onboarding
-- EDPB Guidelines 02/2025 compliance: key destruction + offchain anchoring
+A formal DPIA will be conducted before Phase 3 marketplace launch.
 
-The database option is preferred partly because GDPR compliance is simpler.
+### 5.6 International data transfers
 
-### 5.4 International transfers
+Data stays within the EU by default:
 
-If marketplace allows EU-to-non-EU trades, Standard Contractual Clauses (SCCs) apply. Initial launch is EU-only to avoid this complexity.
+- Servers located in Germany
+- Backup services in other EU countries
+- Support staff located in EU
+- No default transfer to third countries
 
-### 5.5 DPIA (Article 35)
-
-Data Protection Impact Assessment required because:
-
-- Systematic processing of user data
-- Novel technology (marketplace for digital items)
-- Potentially high-risk for user rights
-
-DPIA commissioned in Phase 1, before marketplace public launch.
-
----
-
-## 6. Taxation
-
-### 6.1 User taxation - purchase rewards
-
-GoCoin earned as purchase bonus:
-
-- **Generally tax-free** under established German loyalty program precedent
-- Treated as a rebate (Rabatt) reducing the effective purchase price
-- No 1099-equivalent reporting required in Germany
-- Reference: BMF-Schreiben 10 December 2015 on loyalty programs
-
-**Exception:** If purchase is business-related (company paying for employee tools), company accounting treatment applies.
-
-### 6.2 Operator taxation
-
-Node operators receive taxable income:
-
-**Classification options:**
-
-- **§ 22 Nr. 3 EStG (Sonstige Einkünfte):** Small operators, casual activity, under 256 EUR annual Freigrenze
-- **§ 15 EStG (Gewerbliche Einkünfte):** Regular commercial operation, requires Gewerbeanmeldung
-- **Hobby-Einkünfte:** Very minor, no reporting needed
-
-**Valuation for tax purposes:**
-
-The GoCoin reward is valued at its **redemption value** at the time of receipt. Example: if 100 GoCoin redeems for 100 EUR of ecosystem goods when received, the operator's taxable income is 100 EUR.
-
-**Reporting:** Foundation provides annual statements (January of following year) showing:
-
-- Total GoCoin earned
-- Monthly breakdown
-- EUR equivalent valuation
-- Suggested tax classification
-
-**DAC7:** Platform operator reporting requirement to tax authorities. Applies when:
-
-- Operator earns over 2,000 EUR equivalent/year, OR
-- Operator conducts over 30 transactions/year
-
-Foundation implements DAC7-compliant reporting.
-
-### 6.3 Marketplace trade taxation
-
-When users trade GoCoin and ecosystem items between each other:
-
-**Private sales (§ 23 EStG):**
-
-- Gains may be tax-free if items held longer than 1 year
-- Freibetrag of 600 EUR/year for total private sales gains
-- Losses can offset gains in same year
-
-**Commercial trading:**
-
-- Regular pattern of trading = Gewerbliche Tätigkeit
-- Requires Gewerbeanmeldung
-- Subject to full income tax and Gewerbesteuer
-
-**Foundation reporting (DAC7):**
-
-- Transactions over 2,000 EUR equivalent require user verification and reporting
-- High-volume users tracked per DAC7 requirements
-
-### 6.4 VAT treatment
-
-**Umsatzsteuer (VAT) application:**
-
-| Transaction | VAT status |
-|:-----------|:-----------|
-| User purchase with EUR | Full VAT (19% standard) |
-| GoCoin as purchase bonus | Not separately taxed |
-| Operator receives GoCoin rewards | Outside VAT scope (no identifiable recipient at issuance) |
-| User redeems GoCoin for goods | VAT applies at redemption point |
-| Marketplace trades user-to-user | Typically outside VAT for private users |
-| Marketplace fees | Foundation fee income, VAT applies above thresholds |
-
-**CJEU Hedqvist (C-264/14):** Relevant for potential future euro conversions, but not applicable to closed-loop loyalty points.
-
-### 6.5 Foundation tax treatment
-
-**If Swiss Stiftung:**
-
-- Cantonal tax exemption possible if public-interest status granted
-- Subject to Swiss regulatory framework
-- International recognition of tax-exempt status
-
-**If German gemeinnützige Stiftung:**
-
-- Körperschaftsteuer exemption under § 5 Abs. 1 Nr. 9 KStG
-- Gewerbesteuer exemption under § 3 Nr. 6 GewStG
-- Requires clear Gemeinwohl purpose in Stiftungssatzung
-
-**GmbH:**
-
-- Standard corporate taxation
-- Services to Foundation must be at arm's length pricing
-- German Körperschaftsteuer (15%) + Solidaritätszuschlag + Gewerbesteuer
+If international transfers become necessary:
+- Standard Contractual Clauses (SCCs) per EU Commission Decision 2021/914
+- Transfer impact assessments
+- Explicit user consent where required
 
 ---
 
-## 7. Consumer protection
+## 6. Consumer protection
 
-### 7.1 Applicable regulations
+### 6.1 Consumer Rights Directive compliance
 
-| Regulation | Applicability |
-|:-----------|:--------------|
-| EU Consumer Rights Directive (2011/83/EU) | Yes - online sales, digital content |
-| Digitale-Inhalte-Richtlinie (EU 2019/770) | Yes - digital content delivery |
-| BGB §§ 312-312k | Yes - distance contracts, digital content |
-| PreisangabenVerordnung (PAngV) | Yes - price transparency |
-| UWG (Unfair Competition) | Yes - marketing practices |
+**Directive 2011/83/EU** and German implementation (§§ 312 ff. BGB) apply to:
 
-### 7.2 Withdrawal right
+- Purchase of Pro subscriptions (service contracts)
+- Purchase of hardware devices (distance selling)
+- Peer-to-peer marketplace transactions (partially)
 
-Users generally have 14-day withdrawal right for:
+### 6.2 Withdrawal rights
 
-- Pro subscriptions purchased online
-- Hardware devices
-- Digital content (with exceptions per § 356 BGB)
+**For purchases from the Foundation:**
 
-**GoCoin specific:**
+Users have the right to withdraw from purchases within 14 days under § 355 BGB:
+- Digital services (Pro subscriptions): withdrawal possible unless user explicitly waives it after service begins
+- Hardware: full 14-day withdrawal right with return shipping
+- Special edition redemptions: withdrawal possible if digital goods not yet accessed
 
-- Purchased directly with EUR: 14-day withdrawal applies to the underlying purchase (e.g., Pro subscription)
-- Earned as bonus on EUR purchase: GoCoin bonus follows underlying purchase - if user withdraws purchase, bonus is reversed
-- Redemption of GoCoin: immediate execution, user acknowledges no withdrawal right (per § 356 Abs. 5 BGB for digital content)
-- Marketplace trades: immediate execution, no withdrawal right between private users
+**For peer-to-peer marketplace trades:**
+- Consumer-to-consumer trades: no statutory withdrawal right
+- Commercial-to-consumer trades: 14-day withdrawal right applies
+- Foundation dispute resolution available as backup
 
-### 7.3 Guarantee and warranty
+### 6.3 Warranty rights
 
-| Item | Guarantee |
-|:-----|:----------|
-| EUR-purchased digital subscriptions | 2-year legal warranty (Gewährleistung) |
-| EUR-purchased hardware | 2-year legal warranty + possibly manufacturer guarantee |
-| GoCoin balance | Loyalty program Terms of Service commitments |
-| Redeemed items | Standard product warranty |
-| Marketplace trades user-to-user | No Foundation warranty - disputes between parties |
+**Statutory warranty (§§ 434 ff. BGB):**
+- Applies to hardware sold by the Foundation
+- 2-year warranty period for consumers
+- 1-year warranty period for commercial buyers
 
-### 7.4 Clear Terms of Service
+**Digital content:**
+- Foundation guarantees continued accessibility of purchased digital goods
+- Bug fixes and security updates provided during support period
+- 6 months notice for service discontinuation
 
-Required ToS elements for EU consumer protection:
+### 6.4 Unfair terms
 
-- Clear identification of provider (Impressum)
-- Complete description of loyalty program rules
-- Unambiguous statement of non-monetary nature of GoCoin
-- Fair changes-to-terms procedure (6+ months notice for material changes)
-- Account termination procedures protecting accumulated value
-- Dispute resolution mechanisms
-- Jurisdiction and applicable law
+Terms avoid clauses considered unfair under § 309 BGB and UCP Directive:
+- No unilateral changes without notice
+- No exclusion of statutory consumer rights
+- No disproportionate penalties
+- Clear language, not legal jargon
 
 ---
 
-## 8. Anti-money laundering
+## 7. Age verification and minors
 
-### 8.1 GwG applicability
+### 7.1 Legal basis
 
-German Geldwäschegesetz (GwG) applies to specific obligated entities (Verpflichtete). GoNode's position:
+**German Jugendschutzgesetz (JuSchG)** and **Jugendmedienschutz-Staatsvertrag (JMStV)** apply. **Article 8 GDPR** requires parental consent for children under 16 in Germany.
 
-**GoCoin loyalty system:** Not AML-obligated because:
+### 7.2 Age verification approach
 
-- Not redeemable in cash (key criterion for GwG exemption)
-- Limited network instrument
-- No cross-currency transactions
-- Not a financial service provider under GwG § 2
+**For basic account creation:**
+- Age self-declaration (like most web services)
+- Age 16+ for independent accounts
+- Under 16: account requires parental consent
 
-**Marketplace operator:** May have obligations for high-volume or unusual activity:
+**For marketplace participation:**
+- Minimum age 18 for independent marketplace use
+- Age 16-17: marketplace use with verified parental consent
+- Under 16: marketplace access blocked entirely
 
-- § 261 StGB (money laundering) applies to everyone
-- Reporting suspicious activity to FIU (Financial Intelligence Unit)
-- Customer due diligence for high-value trades (though not formally required for closed-loop)
+**For purchases:**
+- Age 18 required for direct Foundation purchases (§ 107 BGB requires consent of legal representative for minors)
+- Hardware devices available to minors 16+ with parental consent
 
-### 8.2 Abuse monitoring
+### 7.3 Content restrictions
 
-Even without formal GwG obligations, GoNode implements abuse monitoring:
-
-| Trigger | Action |
-|:--------|:-------|
-| Unusual trading patterns | Automated flag, manual review |
-| Rapid coin accumulation + offloading | Enhanced monitoring |
-| Multiple accounts same identity | Investigation |
-| Large value peer transfers | Verification request |
-| DAC7 threshold exceeded | Reporting triggered |
-
-### 8.3 KYC approach
-
-**Standard user:** Email verification only (appropriate for loyalty program)
-
-**Elevated activity:** Enhanced verification if:
-
-- Marketplace transactions exceed 1,000 EUR equivalent per year
-- Node operator earning significant rewards
-- Commercial pattern detected
-
-**Hardware-bound accounts (GoKey):** Already hardware-verified, lower monitoring burden.
+Marketplace listings are moderated to prevent:
+- Adult content (JuSchG compliance)
+- Violent or harmful content
+- Content requiring age verification by law
+- Gambling-adjacent content
 
 ---
 
-## 9. Platform liability
+## 8. Taxation
 
-### 9.1 Hosting provider protection
+### 8.1 Tax treatment for users
 
-As a hosting provider under DSA Art. 6:
+**Purchase reward GoCoin:**
 
-- Not liable for user-generated content until actual knowledge of illegality
-- Prompt action on notice (per Art. 16)
-- No general monitoring obligation (Art. 8)
+Bonus coins received as reward for purchasing services/goods are treated as **price reduction (Rabatt)** under German tax law:
+- Not separate taxable income for the user
+- Effectively reduces the purchase price
+- No immediate taxable event
+- Reference: BMF guidance on loyalty programs (analogous treatment to Payback points)
 
-### 9.2 Marketplace-specific liability
+**Redemption of GoCoin:**
 
-For peer-to-peer trades:
+When users redeem coins for ecosystem goods:
+- Not a new taxable event for consumers (like redeeming Payback points)
+- Foundation collects VAT on the goods/services at delivery
+- If coins are redeemed for physical goods above 250 EUR value, potential income tax consideration - typically covered by personal exemptions
 
-- Foundation not party to the trade
-- No implied warranty on traded items
-- Dispute resolution provided as service, not guarantee
-- Clear ToS disclaiming trade warranties
+**Peer-to-peer marketplace trades:**
 
-### 9.3 Payment processing liability
+When users trade items/coins between each other:
+- Private sales up to 600 EUR/year tax-free under § 23 Abs. 3 EStG
+- Commercial frequency may trigger business classification
+- Long-held items (1+ year) generally tax-free for private users
+- DAC7 reporting above 2,000 EUR per user per year or 30+ transactions
 
-For EUR purchases that generate GoCoin bonuses:
+### 8.2 Tax treatment for node operators
 
-- Standard payment service provider (Stripe, etc.) handles payments
-- GoNode not a payment service provider itself
-- Refunds/chargebacks handled by payment processor
-- GoCoin bonus reversal follows underlying purchase
+Node operator rewards are taxable income:
 
-### 9.4 Insolvency protection
+**Commercial operators (gewerblich):**
+- Revenue under § 15 EStG
+- Gewerbeanmeldung required if profit-oriented and continuous
+- Subject to Gewerbesteuer above thresholds
+- Proper bookkeeping required
+- Valuation at fair market value on receipt date
 
-If the Foundation or GmbH becomes insolvent:
+**Hobby operators (Liebhaberei):**
+- Income below 256 EUR/year: tax-free under § 22 Nr. 3 EStG
+- Above threshold: sonstige Einkünfte
+- Simpler reporting via personal tax return
 
-- User GoCoin balances: Foundation commitment, may lose value in insolvency
-- EUR-purchased subscriptions: Standard insolvency treatment
-- Hardware orders: Consumer protection per German InsO
+**Valuation of rewards:**
 
-**Mitigation:**
+Since GoCoin has fixed redemption values (not market prices), valuation is straightforward: the EUR-equivalent redemption value at the time of receipt.
 
-- Foundation maintains reserve funds
-- Clear ToS on insolvency treatment
-- Option to redeem coins promptly to hedge risk
-- No pooled customer EUR (payments flow immediately to operational accounts)
+**Foundation reporting to operators:**
+
+Annual earnings statements provided to all operators with monthly coin receipts, EUR valuation, and year-to-date totals.
+
+### 8.3 VAT / Umsatzsteuer
+
+**Foundation VAT obligations:**
+- Pro subscriptions: standard German VAT (19%)
+- Hardware sales: standard German VAT
+- Marketplace fees: VAT if above small-business threshold (§ 19 UStG)
+- EU cross-border: OSS (One Stop Shop) registration for consumer sales in other EU countries
+
+**GoCoin transactions:**
+- Issuance of loyalty coins: not a VAT event
+- Redemption of coins for goods: VAT on the goods/services delivered
+- Peer-to-peer trades: outside VAT scope for private users
+- Commercial P2P trades: VAT may apply for commercial seller
+
+### 8.4 DAC7 reporting
+
+**Directive (EU) 2021/514 (DAC7)** requires platform operators to report user transactions to tax authorities.
+
+**Applicability to GoNode:**
+- Platform operator: IT and More Systems GmbH
+- Reportable activities: peer-to-peer marketplace transactions above thresholds
+- Reporting frequency: annual
+- Reporting threshold: 2,000 EUR per user per year OR 30+ transactions
+
+**Implementation:**
+- Data collection: user tax residence, TIN, transaction volumes
+- Annual report to Bundeszentralamt für Steuern (BZSt)
+- User notification about reporting
+- Records retained 10 years
+
+### 8.5 Corporate tax
+
+IT and More Systems GmbH pays standard German corporate taxes:
+- Körperschaftsteuer 15% + Solidaritätszuschlag 5.5% = 15.825%
+- Gewerbesteuer approximately 14-17% depending on municipality
+- Total effective corporate tax rate: approximately 30-32%
 
 ---
 
-## 10. Intellectual property
+## 9. Insolvency considerations
 
-### 10.1 Open source licensing
+### 9.1 User protection if operator fails
 
-All GoNode software is licensed under AGPL-3.0:
+If IT and More Systems GmbH becomes insolvent, user coin balances are treated under German insolvency law (§§ 1 ff. Insolvenzordnung):
+- Contractual claims against the Foundation for future services
+- Not deposits requiring separate protection
+- Similar treatment to Payback points, airline miles, gift cards, Steam Wallet balances
+- In insolvency proceedings: users join the general creditor pool
 
-- Source code freely available
-- Derivatives must remain AGPL-3.0
-- Network use triggers disclosure obligations
-- Patent grant from contributors
+### 9.2 Mitigating measures
 
-### 10.2 Trademarks
+The Foundation commits to:
+- Separate customer deposit funds for pending services where possible
+- Minimum 6 months operating reserve
+- Business interruption and cyber insurance
+- Monthly transparency reports on financial health
+- Early warning if financial difficulties arise
 
-Planned trademark registrations:
+### 9.3 Prepaid services concern
 
-- GoNode (word mark) - EU and international classes
-- GoCoin (word mark) - EU classes for loyalty programs
-- SimpleGo ecosystem marks
-- Logo marks as developed
-
-### 10.3 User-generated content
-
-User listings on marketplace remain user property:
-
-- ToS grants platform license to display
-- No ownership transfer to Foundation
-- Removal on user request (with limited exceptions)
+For users paying in advance (annual subscriptions, prepaid orders):
+- Funds held as deposits until service delivered
+- Users have priority claim for undelivered services under consumer protection law
+- Foundation maintains operational reserves to fulfil existing obligations
 
 ---
 
-## 11. Criminal law considerations
+## 10. Anti-money laundering (AML)
 
-### 11.1 Developer liability (lessons from Tornado Cash)
+### 10.1 GwG non-applicability
 
-Recent crypto-related prosecutions (Alexey Pertsev, Roman Storm, Samourai Wallet founders) established patterns of developer liability. The common factors:
+The Geldwäschegesetz (GwG) applies to "Verpflichtete" listed in § 2. GoNode is not:
+- Not a financial institution
+- Not a payment service provider (PSD2 exemption)
+- Not a crypto-asset service provider (closed-loop exemption)
+- Not subject to GwG Verpflichteter status
 
-- Retained admin/upgrade keys after launch
-- Received fees from protocol operation
-- Continued active involvement as illegal use occurred
-- Custody or exchange-like functionality
-- Marketing emphasising anonymity for illegal use
+### 10.2 Voluntary AML measures
 
-**GoNode's protection strategy (adapted for loyalty system):**
+Despite GwG non-applicability, the Foundation implements voluntary AML measures:
+- Suspicious activity monitoring with automated flagging
+- Transaction velocity limits
+- Volume thresholds triggering review
+- Behavioural analysis for illicit patterns
+- Voluntary reporting of suspicious activity to authorities
 
-| Risk Factor | GoNode Mitigation |
-|:------------|:------------------|
-| Admin key retention | Not applicable - no smart contracts, database-based |
-| Fee extraction | Marketplace fees burned, not retained by Foundation |
-| Custody | Foundation holds no user money |
-| Exchange functionality | No money exchange possible by design |
-| Anonymity marketing | Focus on privacy, not anonymity for illegal use |
-| Active involvement in illegal use | Clear ToS, prompt takedown on notice |
+### 10.3 Why AML matters even without GwG
 
-### 11.2 Relevant German criminal law
+- Reputational risk from illicit use
+- Regulatory monitoring
+- Enterprise customers require clean compliance record
+- DAC7 reporting creates tax authority visibility
+- Banking relationships require AML policies
 
-| Section | Offense | Relevance |
-|:--------|:--------|:----------|
-| StGB § 261 | Geldwäsche (money laundering) | Closed-loop mitigates risk significantly |
-| StGB § 263 | Betrug (fraud) | User fraud on marketplace - report to authorities |
-| StGB § 202a | Ausspähen von Daten | Unauthorised account access - our security prevents |
-| TKG § 88 | Fernmeldegeheimnis | Protects GoNode's encrypted communications |
+---
 
-### 11.3 Constitutional protections
+## 11. Intellectual property and licensing
 
-Grundgesetz Article 10 (Fernmeldegeheimnis) protects the underlying SimpleX communications. BVerfGE 125, 260 extends this to internet traffic.
+### 11.1 Open source licensing
 
-The loyalty program itself does not have special constitutional protection - it operates under standard commercial law.
+GoNode software is licensed under **AGPL-3.0**:
+- Source code must be made available to users of network services
+- Derivative works must be licensed under AGPL-3.0
+- No warranty or liability for code
+- Commercial use permitted with copyleft obligations
+
+### 11.2 Trademark considerations
+
+Trademarks to be registered:
+- "GoCoin" (word mark, classes 9, 35, 38, 42)
+- "GoNode" (word mark, classes 9, 38, 42)
+- "SimpleGo" (word mark + logo, multiple classes)
+- EU Trade Mark (EUTM) registration preferred
+
+### 11.3 Third-party IP
+
+Open source dependencies comply with respective licenses:
+- All dependencies audited for license compatibility with AGPL-3.0
+- No proprietary dependencies incorporated
+- Attribution maintained as required
+- SBOM (Software Bill of Materials) published
 
 ---
 
 ## 12. Compliance program
 
-### 12.1 Pre-launch activities
+### 12.1 Implementation timeline
 
-**Phase 0 (months 0-3):**
-
-- Foundation incorporation
-- GmbH scope update for loyalty program administration
-- Rechtsgutachten from qualified German law firm confirming limited network exemption
+**Phase 0 (Months 0-3):**
+- Legal opinion on loyalty program classification
 - Terms of Service drafting
-- Initial compliance documentation
+- Privacy policy (GDPR compliance)
+- DSA notice-and-action mechanism design
+- Trademark applications
 
-**Phase 1 (months 3-9):**
+**Phase 1 (Months 3-9):**
+- DPIA for marketplace and DAC7 reporting
+- Marketplace Terms of Service
+- Dispute resolution procedures
+- Age verification implementation
 
-- DPIA completion
-- BaFin proactive notification (if approaching 1M EUR threshold)
-- DSA compliance implementation (notice-and-action system)
-- Privacy policy finalisation
-- Tax reporting infrastructure (DAC7)
+**Phase 2 (Months 9-15):**
+- Full DSA compliance documentation
+- DAC7 reporting infrastructure
+- AML policy documentation
+- External compliance audit
 
-**Phase 2 (months 9-15):**
-
-- Legal review of marketplace terms
-- Security audit of ledger system
-- Consumer protection compliance verification
-- Trademark registrations
+**Phase 3 (Months 15-21):**
+- Marketplace launch with full compliance
+- Ongoing monitoring and reporting
+- Annual transparency report
 
 ### 12.2 Ongoing compliance
 
-**Monthly:**
-- Transaction monitoring
-- Security incident review
-- Content moderation statistics
+**Monthly:** Transaction pattern monitoring, suspicious activity review, content moderation reports
 
-**Quarterly:**
-- Compliance self-audit
-- Legal framework review (for regulatory changes)
-- Risk assessment update
+**Quarterly:** Internal compliance audit, regulatory update review, policy adjustments
 
-**Annually:**
-- External legal review
-- DPIA refresh
-- Penetration testing
-- Tax reporting (DAC7 to tax authorities)
+**Annually:** External compliance audit, transparency report, DAC7 reporting to BZSt, insurance renewal, legal opinion refresh
 
 ### 12.3 Incident response
 
 **Data breaches:**
-
 - Identification within 24 hours
-- Supervisory authority notification within 72 hours (GDPR Art. 33)
-- User notification without undue delay if high risk (Art. 34)
-- Post-incident review within 30 days
+- Supervisory authority notification within 72 hours (Art. 33 GDPR)
+- User notification as required (Art. 34 GDPR)
 
-**Marketplace fraud:**
-
-- Immediate listing suspension
-- User investigation
-- Criminal complaint if warranted
-- Restitution between parties (not Foundation-guaranteed)
+**Security incidents:**
+- Initial response within 1 hour
+- Stakeholder communication per severity
+- Coordinated response per SECURITY.md
 
 **Regulatory inquiries:**
-
-- 48-hour acknowledgement
+- Acknowledgement within 48 hours
 - Substantive response per deadline
-- Legal counsel involvement for significant inquiries
+- Legal counsel engagement for significant matters
 
 ---
 
-## 13. Comparison to old crypto-based model
+## 13. Comparison: old crypto-token compliance vs. new loyalty compliance
 
-| Compliance Area | Old (crypto token) | New (loyalty system) |
-|:----------------|:-------------------|:---------------------|
-| MiCA compliance | Extensive (Title II whitepaper, Art. 59 CASP) | None required |
-| BaFin interaction | Whitepaper filing, ongoing oversight | Light notification only |
-| KWG considerations | Multiple provisions to manage | Minimal |
-| GwG | Significant concerns | Largely inapplicable |
-| Tax complexity | Complex crypto taxation for users | Standard loyalty treatment |
-| DSA | Applicable | Applicable (mostly marketplace) |
-| GDPR | Complex (blockchain immutability) | Standard (database is deletable) |
-| Tornado Cash risk | Significant | Minimal |
-| Legal opinion cost | ~100,000 EUR | ~30,000 EUR |
-| Ongoing legal counsel | ~200,000 EUR/year | ~50,000 EUR/year |
-| Total legal setup | ~600,000 EUR | ~150,000 EUR |
-
-**Savings from redesign: approximately 450,000 EUR in initial legal costs, 150,000 EUR/year ongoing.**
+| Area | Old (Crypto Token) | New (Loyalty System) |
+|:-----|:-------------------|:---------------------|
+| Primary regulation | MiCA Title II | PSD2 Art. 3(k) / ZAG § 2 |
+| Pre-launch filing | MiCA whitepaper to BaFin | Simple notification (if volume > 1M EUR) |
+| Classification effort | Significant legal opinion cost | Established precedent, lower cost |
+| Ongoing reporting | MiCA Art. 82 reporting | Simple annual notification |
+| Compliance team size | 2-3 FTE needed | 0.5-1 FTE sufficient |
+| Legal opinion cost | 50,000 - 150,000 EUR | 10,000 - 30,000 EUR |
+| Audit requirements | Smart contract audits (50-200k EUR) | Standard software audits (10-30k EUR) |
+| CASP risk | High (Tornado Cash precedent) | Not applicable |
+| GwG Verpflichteter | Possible | Not triggered |
+| BaFin relationship | Active oversight | Minimal (notification only) |
+| International complexity | Varies by jurisdiction | Standard EU loyalty framework |
+| User data requirements | Standard + crypto-specific | Standard only |
+| Settlement risk | Blockchain finality concerns | Normal contract law |
+| Total annual compliance cost | 200,000 - 400,000 EUR | 30,000 - 80,000 EUR |
 
 ---
 
-## 14. Related components
+## 14. Regulatory risk assessment
+
+### 14.1 Classification reclassification risk
+
+**Risk:** Regulators reclassify GoCoin as e-money or crypto-asset.
+**Likelihood:** Low. Closed-loop structure well-established.
+**Mitigation:** Conservative design, legal opinion documenting classification basis, early engagement with BaFin, ability to modify design if regulatory guidance changes.
+
+### 14.2 DSA enforcement risk
+
+**Risk:** DSA compliance issues trigger sanctions.
+**Likelihood:** Low-medium for new platforms.
+**Mitigation:** Strong initial DSA compliance framework, clear Terms of Service, responsive notice-and-action system, transparency reporting from launch.
+
+### 14.3 Tax classification risk
+
+**Risk:** Tax authorities challenge loyalty program treatment.
+**Likelihood:** Low. Guidance well-established.
+**Mitigation:** Follow BMF guidance, proper documentation of transactions, conservative valuation approaches, annual tax review.
+
+### 14.4 Consumer protection risk
+
+**Risk:** Consumer protection authorities find unfair practices.
+**Likelihood:** Low with proper Terms of Service.
+**Mitigation:** Terms drafted by consumer protection specialist, regular review, proactive dispute resolution, no aggressive retention or dark patterns.
+
+### 14.5 Cross-border risk
+
+**Risk:** Different interpretation in other EU member states.
+**Likelihood:** Low for established loyalty framework.
+**Mitigation:** Stay within EU-harmonised rules, legal review for major market expansions, no country-specific sensitive features.
+
+---
+
+## 15. Related components
 
 | Component | Role | Documentation |
 |:----------|:-----|:-------------|
-| [Tokenomics](TOKENOMICS.md) | GoCoin loyalty system design | This repo |
-| [Business Model](BUSINESS_MODEL.md) | Revenue streams and funding | This repo |
+| [Tokenomics](TOKENOMICS.md) | Economic design of loyalty system | This repo |
 | [Architecture and Security](ARCHITECTURE_AND_SECURITY.md) | Technical implementation | This repo |
-| [Smart Contracts](SMART_CONTRACTS.md) | Ledger technical specs | This repo |
-| [Security Policy](../SECURITY.md) | Vulnerability disclosure | This repo |
+| [Business Model](BUSINESS_MODEL.md) | Revenue structure supporting compliance | This repo |
+| [Security Policy](../SECURITY.md) | Vulnerability disclosure process | This repo |
+| [Code of Conduct](../CODE_OF_CONDUCT.md) | Community standards | This repo |
 
 ---
 
-*GoNode Legal Compliance v2 - April 2026 (redesigned from crypto-based v1)*
+*GoNode Legal Compliance v2 - April 2026 (redesigned for loyalty system)*
 *IT and More Systems, Recklinghausen, Germany*

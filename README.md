@@ -207,6 +207,16 @@ A dedicated community space for GoNode-specific discussions is being set up sepa
 
 ---
 
+## Feedback welcome
+
+Found a bug, typo, or something that could be improved? **Open a pull request.**
+
+Spotted a real issue in the concept, design, or documentation? **Open an issue below.**
+
+Just want to rant at us? **Join our chat group.** lol
+
+---
+
 ## Get involved
 
 **If you want to help build:**
